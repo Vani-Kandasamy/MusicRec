@@ -29,7 +29,22 @@ def create_initial_user_profile():
         "Composer": "No",
         "Hours per day": 2,
         "While working": "Yes",
-        "Frequency [Classical]": 5
+        "Frequency [Classical]": 5,
+        'Foreign languages':,
+        'BPM':, 
+        'Frequency [Classical]':,
+       'Frequency [EDM]':, 
+       'Frequency [Folk]':,
+        'Frequency [Gospel]':,
+       'Frequency [Hip hop]':, 
+       'Frequency [Jazz]':, 
+       'Frequency [K pop]':,
+       'Frequency [Metal]':, 
+       'Frequency [Pop]':, 
+       'Frequency [R&B]':,
+       'Frequency [Rock]':, 
+       'Frequency [Video game music]:
+
     }
 
 def display_stored_user_data(user_profile):

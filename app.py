@@ -23,11 +23,16 @@ def run_app(user_email):
     exploratory = st.slider("Openness to New Music", 0, 10, 5)
     anxiety = st.slider("Anxiety Level", 0, 10, 5)
     depression = st.slider("Depression Level", 0, 10, 5)
+    insomnia = st.slider("Insomnia Level", 0, 10, 5)
+    ocd = st.slider("OCD Level", 0, 10, 5)
 
     real_time_data = {
         "Exploratory": exploratory,
         "Anxiety": anxiety,
-        "Depression": depression
+        "Depression": depression,
+        "Insomnia": insomnia,
+        "OCD": ocd
+
     }
     user_profile.update(real_time_data)
 
