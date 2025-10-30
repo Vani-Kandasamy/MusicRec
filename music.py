@@ -5,7 +5,7 @@ import os
 import aiofiles
 import aiohttp
 import nest_asyncio
-from pydub import AudioSegment
+import soundfile as sf
 import streamlit as st
 import random
 
@@ -140,14 +140,19 @@ async def get_track_status(task_id):
 async def handle_track_file(file_path, url):
     """Download and process the generated track."""
     try:
+        # Download the file
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 response.raise_for_status()
                 async with aiofiles.open(file_path, "wb") as f:
                     await f.write(await response.read())
-        sound = AudioSegment.from_wav(file_path)
-        sound.export(file_path.replace('.wav', '.mp3'), format="mp3")
+        
+        # Convert to MP3 using soundfile and numpy
+        data, samplerate = sf.read(file_path)
+        mp3_path = file_path.replace('.wav', '.mp3')
+        sf.write(mp3_path, data, samplerate, format='mp3')
         return True
+        
     except Exception as e:
         st.error(f"❌ Error processing audio file: {str(e)}")
         return False
