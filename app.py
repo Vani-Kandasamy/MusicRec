@@ -1,7 +1,7 @@
 # app.py
 
 import streamlit as st
-from login import perform_login, session_logout
+from login import is_authenticated, get_current_user, show_login_page, session_logout
 from database import get_user_profile, create_initial_user_profile, display_stored_user_data
 from music import predict_favorite_genre, create_and_compose, get_spotify_playlist
 import spotipy
@@ -141,53 +141,59 @@ async def main():
             layout="wide"
         )
         
+        # Check authentication
+        if not is_authenticated():
+            show_login_page()
+            return
+            
+        # Get current user info
+        user = get_current_user()
+        user_email = user['email']
+        user_name = user['name']
+        
         # Initialize Spotify client
         sp_client = initialize_spotify()
+        if not sp_client:
+            st.error("Failed to initialize Spotify client. Please check your credentials.")
+            return
 
         # Load the trained model
         model = load_model()
+        if not model:
+            st.error("Failed to load the prediction model.")
+            return
         
         # Display header
         st.image("https://cdn.punchng.com/wp-content/uploads/2022/03/28122921/Brain-Train-Blog-Image-2.jpg", 
                 use_column_width=True)
         
-        # Handle authentication
-        user_email, user_name = perform_login()
+        # Show welcome message
+        st.sidebar.success(f"Welcome, {user_name}!")
         
-        if user_email:
-            # User is logged in
-            st.sidebar.success(f"Logged in as: {user_name}")
+        # Add logout button
+        if st.sidebar.button("Logout"):
+            session_logout()
+            st.rerun()
             
-            try:
-                # Get or create user profile
-                user_profile = get_user_profile(user_email)
-                
-                if user_profile is None:
-                    # First-time user - show profile creation
-                    user_profile = create_initial_user_profile(user_email)
-                    
-                    if user_profile is None:
-                        # User didn't complete profile
-                        st.warning("Please complete your profile to continue.")
-                        return
-                
-                # Show the main application
-                await show_music_recommendations(user_profile, sp_client, user_email, model)
-                
-            except Exception as e:
-                show_error_page(f"An error occurred: {str(e)}")
+        # Rest of your existing code...
+        # Get or create user profile
+        user_profile = get_user_profile(user_email)
+        
+        if user_profile is None:
+            # First-time user - show profile creation
+            user_profile = create_initial_user_profile(user_email, user_name)
             
-            # Logout button
-            if st.sidebar.button("Log out"):
-                session_logout()
-        else:
-            # User is not logged in
-            st.sidebar.warning("Please log in to use the app.")
-            st.info("Welcome to Music for Mental Health! Please log in to get personalized music recommendations.")
-
+            if user_profile is None:
+                # User didn't complete profile
+                st.warning("Please complete your profile to continue.")
+                return
+        
+        # Show the main application
+        show_music_recommendations(user_profile, sp_client)
+            
     except Exception as e:
-        show_error_page(f"A critical error occurred: {str(e)}")
-        raise  
+        st.error(f"An error occurred: {str(e)}")
+        st.stop()
 
 if __name__ == "__main__":
     main()
