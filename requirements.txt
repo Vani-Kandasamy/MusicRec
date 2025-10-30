@@ -38,4 +38,4 @@ python-dotenv>=1.0.0
 # Audio Processing
 pydub>=0.25.1
 ffmpeg-python>=0.2.0
-simpleaudio>=1.0.4  # Alternative audio backend for pydub
+pyaudio>=0.2.13  # More reliable audio backend
