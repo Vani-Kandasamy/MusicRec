@@ -41,17 +41,11 @@ def initialize_spotify():
         st.error(f"❌ Failed to initialize Spotify client: {str(e)}")
         return None
 
-async def show_music_recommendations(user_profile, sp_client, user_email, model):
+async def show_music_recommendations(user_profile, sp_client):
     """Display music recommendations based on user profile."""
     st.title("Music for Mental Health")
     
-    # Display mood tracking form
-    current_mood = track_mood(user_email, user_profile)
-    if current_mood:
-        # Update the user_profile with new mood data
-        user_profile.update(current_mood)
-    
-    # Rest of your existing function
+    # Display user profile information
     display_stored_user_data(user_profile)
     
     # Main content area with two columns
@@ -62,11 +56,10 @@ async def show_music_recommendations(user_profile, sp_client, user_email, model)
         if st.button("Generate AI Music", key="generate_ai_music"):
             with st.spinner('Composing your personalized music...'):
                 try:
-                    genre = predict_favorite_genre(user_profile, model)
-                    await create_and_compose(genre)
+                    genre = predict_favorite_genre(user_profile)
+                    await create_and_compose(genre)  # Make sure this is awaited
                 except Exception as e:
                     st.error(f"❌ Error generating music: {str(e)}")
-                    st.error("Please try again or check your API key in the settings.")
     
     with col2:
         st.header("🎧 Spotify Playlists")
@@ -76,8 +69,8 @@ async def show_music_recommendations(user_profile, sp_client, user_email, model)
                 return
                 
             try:
-                genre = predict_favorite_genre(user_profile, model)
-                playlist_url = await get_spotify_playlist(genre)
+                genre = predict_favorite_genre(user_profile)
+                playlist_url = await get_spotify_playlist(genre)  # Make sure this is awaited
                 if playlist_url:
                     st.success(f"Here's a {genre} playlist for you:")
                     st.markdown(f"[Open Playlist in Spotify]({playlist_url})")
@@ -85,6 +78,7 @@ async def show_music_recommendations(user_profile, sp_client, user_email, model)
                     st.warning(f"No {genre} playlists found. Please try another genre.")
             except Exception as e:
                 st.error(f"❌ Failed to fetch playlist: {str(e)}")
+
 
 def show_error_page(message):
     """Display an error page with a message."""
@@ -175,7 +169,6 @@ async def main():
             session_logout()
             st.rerun()
             
-        # Rest of your existing code...
         # Get or create user profile
         user_profile = get_user_profile(user_email)
         
@@ -189,11 +182,12 @@ async def main():
                 return
         
         # Show the main application
-        show_music_recommendations(user_profile, sp_client)
+        await show_music_recommendations(user_profile, sp_client)
             
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
         st.stop()
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+    asyncio.run(main())
