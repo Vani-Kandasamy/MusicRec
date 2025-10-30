@@ -5,25 +5,21 @@ import os
 import aiofiles
 import aiohttp
 import nest_asyncio
-import random
-import spotipy
-from spotipy.oauth2 import SpotifyClientCredentials
 from pydub import AudioSegment
 import streamlit as st
+import random
 
 # Allow asyncio to run nested within Streamlit
 nest_asyncio.apply()
 
 # Load Beatoven AI key from Streamlit secrets
 BACKEND_V1_API_URL = "https://public-api.beatoven.ai/api/v1"
-BACKEND_API_HEADER_KEY = st.secrets["BEATOVEN_API_KEY"]
+BACKEND_API_HEADER_KEY = st.secrets.get("BEATOVEN_API_KEY")
 
-# Configure Spotify API using credentials from Streamlit secrets
-sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(
-    client_id=st.secrets["SPOTIFY_CLIENT_ID"],
-    client_secret=st.secrets["SPOTIFY_CLIENT_SECRET"]
-))
-# Genre mapping: Model predictions to genres
+if not BACKEND_API_HEADER_KEY:
+    st.error("❌ Beatoven API key is not configured. Please check your secrets.toml file.")
+
+# Genre mapping and prompts
 GENRE_MAPPING = [
     "Rock", "Pop", "Metal", "EDM", "Hip hop", "Classical", "Video game music", "R&B"
 ]
@@ -40,40 +36,124 @@ GENRE_PROMPTS = {
 }
 
 def predict_favorite_genre(user_profile, model):
-    prediction = model.predict(user_profile)
-    index = prediction if isinstance(prediction, int) and 0 <= prediction < len(GENRE_MAPPING) else 0
-    return GENRE_MAPPING[index]
+    """Predict the favorite music genre based on user profile using the provided model."""
+    try:
+        # Prepare the input features for the model
+        input_features = [
+            user_profile.get('Age', 25),
+            user_profile.get('Hours per day', 2),
+            user_profile.get('While working', 0),
+            user_profile.get('Instrumentalist', 0),
+            user_profile.get('Composer', 0),
+            user_profile.get('Exploratory', 0),  # Binary (0 or 1)
+            user_profile.get('Foreign languages', 0),
+            user_profile.get('BPM', 120),
+            user_profile.get('Frequency [Classical]', 2),
+            user_profile.get('Frequency [EDM]', 2),
+            user_profile.get('Frequency [Folk]', 2),
+            user_profile.get('Frequency [Gospel]', 2),
+            user_profile.get('Frequency [Hip hop]', 2),
+            user_profile.get('Frequency [Jazz]', 2),
+            user_profile.get('Frequency [K pop]', 2),
+            user_profile.get('Frequency [Metal]', 2),
+            user_profile.get('Frequency [Pop]', 2),
+            user_profile.get('Frequency [R&B]', 2),
+            user_profile.get('Frequency [Rock]', 2),
+            user_profile.get('Frequency [Video game music]', 2),
+            user_profile.get('Anxiety', 5),
+            user_profile.get('Depression', 5),
+            user_profile.get('Insomnia', 5),
+            user_profile.get('OCD', 5),
+            user_profile.get('Music effects', 0)
+        ]
+        
+        # Get prediction from the model
+        prediction = model.predict([input_features])
+        
+        index = prediction if isinstance(prediction, int) and 0 <= prediction < len(GENRE_MAPPING) else 0
+        
+        return GENRE_MAPPING[index]
+        
+    except Exception as e:
+        st.error(f"❌ Error predicting genre: {str(e)}")
+        raise  # Re-raise the exception to handle it in the calling function
+
+async def get_spotify_playlist(genre):
+    """Fetch a random Spotify playlist for the given genre."""
+    try:
+        if not hasattr(st, 'secrets') or not st.secrets.get("SPOTIFY_CLIENT_ID"):
+            st.error("❌ Spotify API credentials not configured.")
+            return None
+            
+        results = sp.search(q=genre, type='playlist', limit=5)
+        if not results or 'playlists' not in results or not results['playlists']['items']:
+            st.error("❌ No playlists found for this genre. Please try another genre.")
+            return None
+            
+        playlist = random.choice(results['playlists']['items'])
+        return playlist['external_urls']['spotify']
+        
+    except Exception as e:
+        st.error(f"❌ Failed to fetch Spotify playlist: {str(e)}")
+        return None
 
 async def compose_track(request_data):
-    async with aiohttp.ClientSession() as session:
-        async with session.post(
-            f"{BACKEND_V1_API_URL}/tracks/compose",
-            json=request_data,
-            headers={"Authorization": f"Bearer {BACKEND_API_HEADER_KEY}"},
-        ) as response:
-            response.raise_for_status()
-            data = await response.json()
-            return data.get("task_id")
+    """Send request to compose a new track."""
+    try:
+        if not BACKEND_API_HEADER_KEY:
+            raise ValueError("Beatoven API key not configured")
+            
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{BACKEND_V1_API_URL}/tracks/compose",
+                json=request_data,
+                headers={"Authorization": f"Bearer {BACKEND_API_HEADER_KEY}"},
+                timeout=aiohttp.ClientTimeout(total=30)
+            ) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    raise Exception(f"API error {response.status}: {error_text}")
+                data = await response.json()
+                return data.get("task_id")
+    except asyncio.TimeoutError:
+        st.error("❌ Request to music generation service timed out.")
+        return None
+    except Exception as e:
+        st.error(f"❌ Error in compose_track: {str(e)}")
+        return None
 
 async def get_track_status(task_id):
-    async with aiohttp.ClientSession() as session:
-        async with session.get(
-            f"{BACKEND_V1_API_URL}/tasks/{task_id}",
-            headers={"Authorization": f"Bearer {BACKEND_API_HEADER_KEY}"},
-        ) as response:
-            response.raise_for_status()
-            return await response.json()
+    """Check the status of a track composition."""
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                f"{BACKEND_V1_API_URL}/tasks/{task_id}",
+                headers={"Authorization": f"Bearer {BACKEND_API_HEADER_KEY}"},
+                timeout=aiohttp.ClientTimeout(total=10)
+            ) as response:
+                response.raise_for_status()
+                return await response.json()
+    except Exception as e:
+        st.error(f"❌ Error checking track status: {str(e)}")
+        return {"status": "failed"}
 
 async def handle_track_file(file_path, url):
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            response.raise_for_status()
-            async with aiofiles.open(file_path, "wb") as f:
-                await f.write(await response.read())
-    sound = AudioSegment.from_wav(file_path)
-    sound.export(file_path.replace('.wav', '.mp3'), format="mp3")
+    """Download and process the generated track."""
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                response.raise_for_status()
+                async with aiofiles.open(file_path, "wb") as f:
+                    await f.write(await response.read())
+        sound = AudioSegment.from_wav(file_path)
+        sound.export(file_path.replace('.wav', '.mp3'), format="mp3")
+        return True
+    except Exception as e:
+        st.error(f"❌ Error processing audio file: {str(e)}")
+        return False
 
 async def watch_task_status(task_id, file_path):
+    """Monitor the status of a track generation task."""
     while True:
         track_status = await get_track_status(task_id)
         if track_status["status"] == "completed":
@@ -86,34 +166,73 @@ async def watch_task_status(task_id, file_path):
         await asyncio.sleep(10)
 
 async def create_and_compose(genre):
-    track_meta = {
-        "prompt": {
-            "text": GENRE_PROMPTS.get(genre, "Compose a melody"),
-            "genre": genre
-        },
-        "format": "wav"
-    }
-    task_id = await compose_track(track_meta)
-    file_path = os.path.join(os.getcwd(), "composed_track.wav")
-    await watch_task_status(task_id, file_path)
-    st.success("Music composed successfully! Listen below.")
-    st.audio("composed_track.mp3")
+    """Create and compose a new track of the specified genre."""
+    if not BACKEND_API_HEADER_KEY:
+        st.error("❌ Music generation is not available. Missing API key.")
+        return
+
+    with st.spinner('🎵 Composing your personalized music...'):
+        try:
+            track_meta = {
+                "prompt": {
+                    "text": GENRE_PROMPTS.get(genre, "Compose a melody"),
+                    "genre": genre
+                },
+                "format": "wav"
+            }
+            
+            task_id = await compose_track(track_meta)
+            if not task_id:
+                raise Exception("Failed to start music generation")
+                
+            file_path = os.path.join(os.getcwd(), "composed_track.wav")
+            mp3_path = file_path.replace('.wav', '.mp3')
+            
+            # Clean up any existing files
+            for f in [file_path, mp3_path]:
+                if os.path.exists(f):
+                    os.remove(f)
+            
+            # Wait for the track to be ready
+            max_attempts = 10
+            for attempt in range(max_attempts):
+                track_status = await get_track_status(task_id)
+                
+                if track_status["status"] == "completed":
+                    url = track_status.get("meta", {}).get("track_url")
+                    if not url:
+                        raise Exception("No track URL in response")
+                        
+                    if await handle_track_file(file_path, url):
+                        if os.path.exists(mp3_path):
+                            st.audio(mp3_path)
+                            st.success("✅ Music generated successfully!")
+                            return
+                    break
+                    
+                elif track_status["status"] == "failed":
+                    raise Exception("Music generation failed")
+                    
+                await asyncio.sleep(5)  # Wait before checking again
+                
+                # Show progress
+                progress = min(90, (attempt + 1) * (100 // max_attempts))
+                st.progress(progress, text=f"Generating your {genre} track... ({progress}%)")
+                
+            else:
+                raise Exception("Music generation timed out")
+                
+        except Exception as e:
+            st.error(f"❌ Error generating music: {str(e)}")
+            st.info("💡 Tip: Check your internet connection and API key if this error persists.")
+        finally:
+            # Clean up
+            for f in [file_path, mp3_path]:
+                if os.path.exists(f):
+                    try:
+                        os.remove(f)
+                    except:
+                        pass
 
 if st.button("Generate AI Music"):
     asyncio.run(create_and_compose(selected_genre))
-
-st.subheader("Explore Spotify Playlists")
-if st.button("Get Spotify Playlist"):
-    playlist_url = get_spotify_playlist(selected_genre)
-    if playlist_url:
-        st.write(f"Here's a {selected_genre} playlist for you:")
-        st.markdown(f"[Open Playlist]({playlist_url})")
-    else:
-        st.write(f"No {selected_genre} playlists found.")
-
-def get_spotify_playlist(fav_genre):
-    results = sp.search(q=fav_genre, type='playlist', limit=1)
-    if results['playlists']['items']:
-        playlist = random.choice(results['playlists']['items'])
-        return playlist['external_urls']['spotify']
-    return None
