@@ -1,6 +1,6 @@
 # Core Dependencies
 streamlit>=1.32.0
-streamlit-oauth2>=0.1.0  # Updated to a maintained fork
+streamlit-authenticator>=0.2.0  # More reliable alternative for authentication
 
 # Firebase
 firebase-admin>=6.2.0
@@ -27,10 +27,6 @@ spotipy>=2.23.0
 
 # Data Serialization
 pickle-mixin>=1.0.2
-
-# Async Support
-nest-asyncio>=1.6.0
-asyncio>=3.4.3
 
 # Environment Management
 python-dotenv>=1.0.0
