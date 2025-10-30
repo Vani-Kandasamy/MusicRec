@@ -1,24 +1,110 @@
+# login.py
+
 import streamlit as st
-from streamlit_auth_component import login_button
+from google_auth_oauthlib.flow import Flow
+from google.oauth2 import id_token
+from google.auth.transport import requests
+from urllib.parse import parse_qs
+
+# OAuth2 configuration
+def get_flow():
+    """Create and return the OAuth flow using Streamlit secrets."""
+    return Flow.from_client_config(
+        client_config={
+            "web": {
+                "client_id": st.secrets["GOOGLE_CLIENT_ID"],
+                "client_secret": st.secrets["GOOGLE_CLIENT_SECRET"],
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+                "redirect_uris": [st.secrets.get("CALLBACK_URL", "http://localhost:8501")]
+            }
+        },
+        scopes=[
+            'openid',
+            'https://www.googleapis.com/auth/userinfo.email',
+            'https://www.googleapis.com/auth/userinfo.profile'
+        ],
+        redirect_uri=st.secrets.get("CALLBACK_URL", "http://localhost:8501")
+    )
+
+def get_google_auth_url():
+    """Generate and return the Google OAuth URL."""
+    flow = get_flow()
+    auth_url, _ = flow.authorization_url(
+        access_type='offline',
+        include_granted_scopes='true',
+        prompt='select_account'  # Force account selection
+    )
+    return auth_url
+
+def get_user_info(code):
+    """Get user info using the authorization code."""
+    flow = get_flow()
+    flow.fetch_token(code=code)
+    credentials = flow.credentials
+    id_info = id_token.verify_oauth2_token(
+        credentials.id_token,
+        requests.Request(),
+        st.secrets["GOOGLE_CLIENT_ID"]
+    )
+    return {
+        'email': id_info.get('email'),
+        'name': id_info.get('name'),
+        'picture': id_info.get('picture')
+    }
 
 def perform_login():
-    # Retrieve Google OAuth credentials
-    GOOGLE_CLIENT_ID = st.secrets["GOOGLE_CLIENT_ID"]
-    GOOGLE_CLIENT_SECRET = st.secrets["GOOGLE_CLIENT_SECRET"]
-    CALLBACK_URL = st.secrets.get("CALLBACK_URL", "http://localhost:8501")
-
-    user_data = login_button(client_id=GOOGLE_CLIENT_ID, client_secret=GOOGLE_CLIENT_SECRET, redirect_uri=CALLBACK_URL)
-
-    if user_data:
-        return user_data.get('email'), user_data.get('name')
-    else:
-        return None, None
-
-def auth_login(client_id, redirect_uri):
-    auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?client_id={client_id}&response_type=code&redirect_uri={redirect_uri}&scope=openid%20email%20profile&access_type=offline"
-    st.experimental_rerun(auth_url)
+    """Handle the login flow."""
+    query_params = st.experimental_get_query_params()
+    code = query_params.get('code', [None])[0]
+    
+    if code:
+        try:
+            user_info = get_user_info(code)
+            st.session_state['user_info'] = user_info
+            st.experimental_set_query_params()  # Clear the code from URL
+            return user_info['email'], user_info['name']
+        except Exception as e:
+            st.error(f"Authentication failed: {str(e)}")
+            return None, None
+    return None, None
 
 def session_logout():
+    """Log out the current user."""
     if 'user_info' in st.session_state:
         del st.session_state['user_info']
-    st.experimental_rerun()
+    st.experimental_set_query_params()
+
+def show_login_page():
+    """Display the login page with Google sign-in button."""
+    st.title("🎵 Music for Mental Health")
+    st.image(
+        "https://img.goodfon.com/original/1920x1080/8/71/fireman-fire-man.jpg",
+        use_column_width=True,
+        caption="Your personal music therapy companion"
+    )
+    
+    st.markdown("### Sign in to continue")
+    
+    # Google sign-in button
+    auth_url = get_google_auth_url()
+    st.markdown(
+        f'<a href="{auth_url}" target="_self" style="text-decoration: none;">'
+        '<div style="background-color: #4285F4; color: white; padding: 10px 20px; '
+        'border-radius: 5px; cursor: pointer; text-align: center; max-width: 240px; margin: 0 auto; '
+        'box-shadow: 0 2px 4px 0 rgba(0,0,0,0.25);">'
+        '<img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" '
+        'style="width: 20px; height: 20px; margin-right: 10px; vertical-align: middle;" alt="Google logo">'
+        'Sign in with Google'
+        '</div>'
+        '</a>',
+        unsafe_allow_html=True
+    )
+
+def is_authenticated():
+    """Check if user is authenticated."""
+    return 'user_info' in st.session_state
+
+def get_current_user():
+    """Get current user info if authenticated."""
+    return st.session_state.get('user_info')
