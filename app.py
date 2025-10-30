@@ -41,7 +41,7 @@ def initialize_spotify():
         st.error(f"❌ Failed to initialize Spotify client: {str(e)}")
         return None
 
-def show_music_recommendations(user_profile, sp_client, user_email, model):
+async def show_music_recommendations(user_profile, sp_client, user_email, model):
     """Display music recommendations based on user profile."""
     st.title("Music for Mental Health")
     
@@ -131,7 +131,7 @@ def track_mood(user_email, current_mood=None):
                 return mood_data
     return None
 
-def main():
+async def main():
     """Main application function."""
     try:
         # Set page config
@@ -172,7 +172,7 @@ def main():
                         return
                 
                 # Show the main application
-                show_music_recommendations(user_profile, sp_client, user_email, model)
+                await show_music_recommendations(user_profile, sp_client, user_email, model)
                 
             except Exception as e:
                 show_error_page(f"An error occurred: {str(e)}")
