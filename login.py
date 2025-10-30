@@ -1,5 +1,3 @@
-# login.py
-
 import streamlit as st
 from streamlit_auth_component import login_button
 
