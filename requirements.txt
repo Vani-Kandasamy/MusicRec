@@ -34,3 +34,8 @@ pickle-mixin>=1.0.2
 
 # Environment Management
 python-dotenv>=1.0.0
+
+# Audio Processing
+pydub>=0.25.1
+ffmpeg-python>=0.2.0
+pyaudioop>=0.2.0  # Required for audio processing
