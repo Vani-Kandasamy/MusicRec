@@ -70,7 +70,7 @@ async def show_music_recommendations(user_profile, sp_client, model):
                 
             try:
                 genre = predict_favorite_genre(user_profile,model)
-                playlist_url = await get_spotify_playlist(genre)  # Make sure this is awaited
+                playlist_url = await get_spotify_playlist(genre,sp_client)  # Make sure this is awaited
                 if playlist_url:
                     st.success(f"Here's a {genre} playlist for you:")
                     st.markdown(f"[Open Playlist in Spotify]({playlist_url})")
