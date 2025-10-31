@@ -239,5 +239,4 @@ async def create_and_compose(genre):
                     except:
                         pass
 
-if st.button("Generate AI Music"):
-    asyncio.run(create_and_compose(selected_genre))
+
