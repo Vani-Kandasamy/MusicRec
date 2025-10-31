@@ -6,13 +6,17 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 from urllib.parse import parse_qs
 
+import streamlit as st
+from google_auth_oauthlib.flow import Flow
+from google.oauth2 import id_token
+from google.auth.transport import requests
+from urllib.parse import urlparse, parse_qs
+import secrets
+
 # OAuth2 configuration
 def get_flow():
-    """Create and return the OAuth flow using Streamlit secrets."""
     try:
-        # Use a fixed redirect URI from secrets or default to localhost
         redirect_uri = st.secrets.get("CALLBACK_URL", "http://localhost:8501")
-        
         return Flow.from_client_config(
             client_config={
                 "web": {
@@ -35,22 +39,18 @@ def get_flow():
         raise
 
 def get_google_auth_url():
-    """Generate and return the Google OAuth URL."""
     try:
         flow = get_flow()
-        # Generate a state token for CSRF protection
-        import secrets
         state = secrets.token_urlsafe(16)
         st.session_state['oauth_state'] = state
-        
+
         auth_url, _ = flow.authorization_url(
             access_type='offline',
             include_granted_scopes='true',
-            prompt='select_account',  # Force account selection
+            prompt='select_account',
             state=state,
-            # Add these parameters to ensure we get a refresh token
             approval_prompt='force',
-            hd='*'  # Allow any Google account
+            hd='*'
         )
         return auth_url
     except Exception as e:
@@ -58,30 +58,22 @@ def get_google_auth_url():
         raise
 
 def get_user_info(code):
-    """Get user info using the authorization code."""
     try:
-        # Verify state to prevent CSRF
         if 'oauth_state' not in st.session_state:
             raise ValueError("Invalid OAuth state")
-            
+
         flow = get_flow()
-        # Exchange the authorization code for tokens
-        flow.fetch_token(
-            code=code,
-            client_secret=st.secrets["GOOGLE_CLIENT_SECRET"]
-        )
-        
-        # Verify the ID token
+        flow.fetch_token(code=code)
+
         id_info = id_token.verify_oauth2_token(
             flow.credentials.id_token,
             requests.Request(),
             st.secrets["GOOGLE_CLIENT_ID"]
         )
-        
-        # Verify the token's audience
+
         if id_info['aud'] != st.secrets["GOOGLE_CLIENT_ID"]:
             raise ValueError("Invalid token audience")
-            
+
         return {
             'email': id_info.get('email'),
             'name': id_info.get('name'),
@@ -95,50 +87,47 @@ def get_user_info(code):
         raise
 
 def perform_login():
-    """Handle the login flow."""
     try:
-        query_params = st.query_params()
+        query_string = urlparse(st.experimental_get_query_params()).query
+        query_params = parse_qs(query_string)
         code = query_params.get('code', [None])[0]
         state = query_params.get('state', [None])[0]
         error = query_params.get('error', [None])[0]
-        
+
         if error:
             st.error(f"OAuth error: {error}")
             return None, None
-            
+
         if code and state:
-            # Verify state to prevent CSRF
             if 'oauth_state' not in st.session_state or st.session_state['oauth_state'] != state:
                 st.error("Invalid OAuth state. Please try again.")
                 return None, None
-                
+
             try:
                 user_info = get_user_info(code)
-                # Clear sensitive data from session
                 if 'oauth_state' in st.session_state:
                     del st.session_state['oauth_state']
-                    
+
                 st.session_state['user_info'] = user_info
                 st.experimental_set_query_params()  # Clear the code from URL
                 return user_info['email'], user_info['name']
-                
+
             except Exception as e:
                 st.error(f"Authentication failed: {str(e)}")
                 if 'oauth_state' in st.session_state:
                     del st.session_state['oauth_state']
                 return None, None
-                
+
     except Exception as e:
         st.error(f"An unexpected error occurred: {str(e)}")
-        
+
     return None, None
 
 def session_logout():
-    """Log out the current user."""
     if 'user_info' in st.session_state:
         del st.session_state['user_info']
-    st.experimental_set_query_params()
-
+    st.experimental_set_query_params()  # Clear URL parameters
+    
 # Add this function to your login.py file
 def show_email_login():
     """Show email login form without database."""
