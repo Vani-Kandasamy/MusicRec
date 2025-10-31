@@ -182,7 +182,7 @@ async def main():
                 return
         
         # Show the main application
-        await show_music_recommendations(user_profile, sp_client)
+        await show_music_recommendations(user_profile, sp_client, model)
             
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
