@@ -174,7 +174,7 @@ async def main():
         
         if user_profile is None:
             # First-time user - show profile creation
-            user_profile = create_initial_user_profile(user_email, user_name)
+            user_profile = create_initial_user_profile(user_email)
             
             if user_profile is None:
                 # User didn't complete profile
