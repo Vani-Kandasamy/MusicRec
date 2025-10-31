@@ -196,59 +196,84 @@ def create_initial_user_profile(user_email):
     return None
 
 def display_stored_user_data(user_profile):
-    """Display the user's profile information."""
+    """Display the user's profile information with expandable sections and editable mood."""
     st.subheader("Your Profile")
     
-    # Basic Information
-    st.markdown("### Basic Information")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("Age", user_profile.get('Age', 'Not set'))
-        st.metric("Instrumentalist", user_profile.get('Instrumentalist', 'Not set'))
-    with col2:
-        st.metric("Hours per day", user_profile.get('Hours per day', 'Not set'))
-        st.metric("Composer", user_profile.get('Composer', 'Not set'))
+    # Basic Information - Expandable section
+    with st.expander("Basic Information", expanded=False):
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Age", user_profile.get('Age', 'Not set'))
+            st.metric("Instrumentalist", user_profile.get('Instrumentalist', 'Not set'))
+        with col2:
+            st.metric("Hours per day", user_profile.get('Hours per day', 'Not set'))
+            st.metric("Composer", user_profile.get('Composer', 'Not set'))
     
-    # Music Preferences
-    st.markdown("### Music Preferences")
-    pref_columns = st.columns(4)
-    genres = [
-        ('Classical', 'Frequency_Classical'),
-        ('EDM', 'Frequency_EDM'),
-        ('Folk', 'Frequency_Folk'),
-        ('Gospel', 'Frequency_Gospel'),
-        ('Hip Hop', 'Frequency_HipHop'),
-        ('Jazz', 'Frequency_Jazz'),
-        ('K-Pop', 'Frequency_KPop'),
-        ('Metal', 'Frequency_Metal'),
-        ('Pop', 'Frequency_Pop'),
-        ('R&B', 'Frequency_RnB'),
-        ('Rock', 'Frequency_Rock'),
-        ('Video Game Music', 'Frequency_VGM')
-    ]
+    # Music Preferences - Expandable section
+    with st.expander("Music Preferences", expanded=False):
+        pref_columns = st.columns(4)
+        genres = [
+            ('Classical', 'Frequency_Classical'),
+            ('EDM', 'Frequency_EDM'),
+            ('Folk', 'Frequency_Folk'),
+            ('Gospel', 'Frequency_Gospel'),
+            ('Hip Hop', 'Frequency_HipHop'),
+            ('Jazz', 'Frequency_Jazz'),
+            ('K-Pop', 'Frequency_KPop'),
+            ('Metal', 'Frequency_Metal'),
+            ('Pop', 'Frequency_Pop'),
+            ('R&B', 'Frequency_RnB'),
+            ('Rock', 'Frequency_Rock'),
+            ('Video Game Music', 'Frequency_VGM')
+        ]
+        
+        for i, (display_name, key) in enumerate(genres):
+            with pref_columns[i % 4]:
+                st.metric(display_name, user_profile.get(key, 'N/A'))
     
-    for i, (display_name, key) in enumerate(genres):
-        with pref_columns[i % 4]:
-            st.metric(display_name, user_profile.get(key, 'N/A'))
-    
-    # Mood Settings
+    # Mood Settings - Always visible and editable
     st.markdown("### Current Mood")
-    mood_cols = st.columns(5)
-    with mood_cols[0]:
-        st.metric("Openness", user_profile.get('Exploratory', 'N/A'))
-    with mood_cols[1]:
-        st.metric("Anxiety", user_profile.get('Anxiety', 'N/A'))
-    with mood_cols[2]:
-        st.metric("Depression", user_profile.get('Depression', 'N/A'))
-    with mood_cols[3]:
-        st.metric("Insomnia", user_profile.get('Insomnia', 'N/A'))
-    with mood_cols[4]:
-        st.metric("OCD", user_profile.get('OCD', 'N/A'))
+    with st.form("mood_form"):
+        mood_cols = st.columns(5)
+        with mood_cols[0]:
+            openness = st.number_input("Openness", 0, 100, 
+                                    value=int(user_profile.get('Exploratory', 50)),
+                                    key="mood_openness")
+        with mood_cols[1]:
+            anxiety = st.number_input("Anxiety", 0, 100, 
+                                    value=int(user_profile.get('Anxiety', 50)),
+                                    key="mood_anxiety")
+        with mood_cols[2]:
+            depression = st.number_input("Depression", 0, 100, 
+                                      value=int(user_profile.get('Depression', 50)),
+                                      key="mood_depression")
+        with mood_cols[3]:
+            insomnia = st.number_input("Insomnia", 0, 100, 
+                                    value=int(user_profile.get('Insomnia', 50)),
+                                    key="mood_insomnia")
+        with mood_cols[4]:
+            ocd = st.number_input("OCD", 0, 100, 
+                               value=int(user_profile.get('OCD', 50)),
+                               key="mood_ocd")
+        
+        # Save button for mood updates
+        if st.form_submit_button("Update Mood"):
+            # Update the user profile with new mood values
+            user_profile.update({
+                'Exploratory': openness,
+                'Anxiety': anxiety,
+                'Depression': depression,
+                'Insomnia': insomnia,
+                'OCD': ocd,
+                'LastUpdated': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            })
+            
+            # Save the updated profile
+            if save_user_profile(st.session_state['user_info']['email'], user_profile):
+                st.success("Mood updated successfully!")
+            else:
+                st.error("Failed to update mood. Please try again.")
     
     # Last updated
     if 'LastUpdated' in user_profile:
         st.caption(f"Last updated: {user_profile['LastUpdated']}")
-    
-    # Edit button
-    if st.button("Edit Profile"):
-        st.session_state.editing_profile = True
