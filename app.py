@@ -56,7 +56,7 @@ async def show_music_recommendations(user_profile, sp_client):
         if st.button("Generate AI Music", key="generate_ai_music"):
             with st.spinner('Composing your personalized music...'):
                 try:
-                    genre = predict_favorite_genre(user_profile)
+                    genre = predict_favorite_genre(user_profile,model)
                     await create_and_compose(genre)  # Make sure this is awaited
                 except Exception as e:
                     st.error(f"❌ Error generating music: {str(e)}")
@@ -69,7 +69,7 @@ async def show_music_recommendations(user_profile, sp_client):
                 return
                 
             try:
-                genre = predict_favorite_genre(user_profile)
+                genre = predict_favorite_genre(user_profile,model)
                 playlist_url = await get_spotify_playlist(genre)  # Make sure this is awaited
                 if playlist_url:
                     st.success(f"Here's a {genre} playlist for you:")
