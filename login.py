@@ -164,7 +164,7 @@ def show_email_login():
                     'name': email.split('@')[0]  # Use part before @ as name
                 }
                 st.success(f"Welcome back, {st.session_state['user_info']['name']}!")
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error("Invalid email or password")
 
