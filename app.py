@@ -41,7 +41,7 @@ def initialize_spotify():
         st.error(f"❌ Failed to initialize Spotify client: {str(e)}")
         return None
 
-async def show_music_recommendations(user_profile, sp_client):
+async def show_music_recommendations(user_profile, sp_client, model):
     """Display music recommendations based on user profile."""
     st.title("Music for Mental Health")
     
