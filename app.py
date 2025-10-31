@@ -15,7 +15,7 @@ from pathlib import Path
 def load_model():
     """Load the trained XGBoost model."""
     try:
-        model_path = Path("best_xgb.pkl")
+        model_path = Path("best_xgb")
         if not model_path.exists():
             raise FileNotFoundError("Model file not found. Please ensure best_xgb.pkl is in the project root.")
         
