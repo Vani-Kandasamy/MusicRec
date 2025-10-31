@@ -24,7 +24,7 @@ def get_flow():
             'https://www.googleapis.com/auth/userinfo.email',
             'https://www.googleapis.com/auth/userinfo.profile'
         ],
-        redirect_uri=st.secrets.get("CALLBACK_URL", "http://localhost:8501")
+        redirect_uri=st.secrets.get("CALLBACK_URL")
     )
 
 def get_google_auth_url():
@@ -79,7 +79,7 @@ def show_login_page():
     """Display the login page with Google sign-in button."""
     st.title("🎵 Music for Mental Health")
     st.image(
-        "https://img.goodfon.com/original/1920x1080/8/71/fireman-fire-man.jpg",
+        "https://cdn.punchng.com/wp-content/uploads/2022/03/28122921/Brain-Train-Blog-Image-2.jpg",
         use_column_width=True,
         caption="Your personal music therapy companion"
     )
@@ -88,18 +88,10 @@ def show_login_page():
     
     # Google sign-in button
     auth_url = get_google_auth_url()
-    st.markdown(
-        f'<a href="{auth_url}" target="_self" style="text-decoration: none;">'
-        '<div style="background-color: #4285F4; color: white; padding: 10px 20px; '
-        'border-radius: 5px; cursor: pointer; text-align: center; max-width: 240px; margin: 0 auto; '
-        'box-shadow: 0 2px 4px 0 rgba(0,0,0,0.25);">'
-        '<img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" '
-        'style="width: 20px; height: 20px; margin-right: 10px; vertical-align: middle;" alt="Google logo">'
-        'Sign in with Google'
-        '</div>'
-        '</a>',
-        unsafe_allow_html=True
-    )
+    # Simple Google sign-in button
+    if st.button('Sign in with Google', key='google_signin'):
+        st.markdown(f'<meta http-equiv="refresh" content="0;url={auth_url}">', unsafe_allow_html=True)
+        st.stop()
 
 def is_authenticated():
     """Check if user is authenticated."""
