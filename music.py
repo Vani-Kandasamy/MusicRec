@@ -156,6 +156,17 @@ async def get_track_status(task_id):
         st.error(f"❌ Error checking track status: {str(e)}")
         return {"status": "failed"}
 
+async def play_audio_from_url(url):
+    """Directly play audio from a URL in Streamlit."""
+    try:
+        # Display the audio player with the direct URL
+        st.audio(url, format='audio/wav')
+        return True
+    except Exception as e:
+        st.error(f"❌ Error playing audio: {str(e)}")
+        return False
+
+'''
 async def handle_track_file_in_memory(url):
     """Download and convert the generated track for direct playback."""
     try:
@@ -185,6 +196,7 @@ async def handle_track_file_in_memory(url):
     except Exception as e:
         st.error(f"❌ Error processing audio file: {str(e)}")
         return None
+'''
 
 async def watch_task_status(task_id):
     """Monitor the status of a track generation task."""
@@ -193,10 +205,8 @@ async def watch_task_status(task_id):
             track_status = await get_track_status(task_id)
             if track_status["status"] == "composed":
                 url = track_status["meta"]["track_url"]
-                mp3_buffer = await handle_track_file_in_memory(url)
-                if mp3_buffer:
-                    st.audio(mp3_buffer.read(), format='audio/mp3')
-                    st.success("✅ Music generated successfully!")
+                await play_audio_from_url(url)
+                st.success("✅ Music generated successfully!")
                 break
             elif track_status["status"] == "failed":
                 st.error("Music generation failed.")
@@ -204,6 +214,7 @@ async def watch_task_status(task_id):
             await asyncio.sleep(10)
     except Exception as e:
         st.error(f"❌ Error monitoring task: {str(e)}")
+        
 
 async def create_and_compose(genre):
     """Create and compose a new track of the specified genre."""
