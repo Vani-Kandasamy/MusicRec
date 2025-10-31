@@ -9,6 +9,9 @@ import soundfile as sf
 import streamlit as st
 import random
 
+import spotipy
+from spotipy.oauth2 import SpotifyClientCredentials
+
 # Allow asyncio to run nested within Streamlit
 nest_asyncio.apply()
 
@@ -78,14 +81,24 @@ def predict_favorite_genre(user_profile, model):
         st.error(f"❌ Error predicting genre: {str(e)}")
         raise  # Re-raise the exception to handle it in the calling function
 
-async def get_spotify_playlist(genre):
-    """Fetch a random Spotify playlist for the given genre."""
+async def get_spotify_playlist(genre, sp_client=None):
+    """Fetch a random Spotify playlist for the given genre.
+    
+    Args:
+        genre (str): The music genre to search for
+        sp_client: Optional Spotify client instance. If not provided, will try to initialize one.
+    """
     try:
-        if not hasattr(st, 'secrets') or not st.secrets.get("SPOTIFY_CLIENT_ID"):
-            st.error("❌ Spotify API credentials not configured.")
-            return None
+        if sp_client is None:
+            if not hasattr(st, 'secrets') or not st.secrets.get("SPOTIFY_CLIENT_ID"):
+                st.error("❌ Spotify API credentials not configured.")
+                return None
+            sp_client = spotipy.Spotify(auth_manager=SpotifyClientCredentials(
+                client_id=st.secrets["SPOTIFY_CLIENT_ID"],
+                client_secret=st.secrets["SPOTIFY_CLIENT_SECRET"]
+            ))
             
-        results = sp.search(q=genre, type='playlist', limit=5)
+        results = sp_client.search(q=genre, type='playlist', limit=5)
         if not results or 'playlists' not in results or not results['playlists']['items']:
             st.error("❌ No playlists found for this genre. Please try another genre.")
             return None
@@ -238,5 +251,3 @@ async def create_and_compose(genre):
                         os.remove(f)
                     except:
                         pass
-
-
