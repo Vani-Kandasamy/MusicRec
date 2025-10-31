@@ -139,27 +139,49 @@ def session_logout():
         del st.session_state['user_info']
     st.experimental_set_query_params()
 
+# Add this function to your login.py file
+def show_email_login():
+    """Show email login form without database."""
+    st.markdown("### Email Login")
+    
+    # Simple hardcoded credentials (for demo only)
+    # In a real app, use proper authentication
+    VALID_CREDENTIALS = {
+        "user@example.com": "password123"  # email: password
+    }
+    
+    with st.form("email_login"):
+        email = st.text_input("Email", key="login_email")
+        password = st.text_input("Password", type="password", key="login_password")
+        submit = st.form_submit_button("Sign In")
+        
+        if submit:
+            if not email or not password:
+                st.warning("Please enter both email and password")
+            elif email in VALID_CREDENTIALS and VALID_CREDENTIALS[email] == password:
+                st.session_state['user_info'] = {
+                    'email': email,
+                    'name': email.split('@')[0]  # Use part before @ as name
+                }
+                st.success(f"Welcome back, {st.session_state['user_info']['name']}!")
+                st.experimental_rerun()
+            else:
+                st.error("Invalid email or password")
+
 def show_login_page():
-    """Display the login page with Google sign-in button."""
+    """Display the login page with Google and email sign-in options."""
     st.title("🎵 Music for Mental Health")
     st.image(
-    "https://cdn.punchng.com/wp-content/uploads/2022/03/28122921/Brain-Train-Blog-Image-2.jpg",
-    use_container_width=True,  # Changed from use_column_width
-    caption="Your personal music therapy companion"
+        "https://cdn.punchng.com/wp-content/uploads/2022/03/28122921/Brain-Train-Blog-Image-2.jpg",
+        use_container_width=True,
+        caption="Your personal music therapy companion"
     )
     
     st.markdown("### Sign in to continue")
     
+    # Google sign-in button
     try:
-        # Check for OAuth errors in the URL
-        query_params = st.experimental_get_query_params()
-        if 'error' in query_params:
-            st.error(f"OAuth error: {query_params.get('error_description', ['Unknown error'])[0]}")
-        
-        # Generate and display the sign-in button
         auth_url = get_google_auth_url()
-        
-        # Use st.link_button for better compatibility
         st.markdown(
             f'<a href="{auth_url}" target="_self" style="text-decoration: none;">'
             '<button style="background-color: #4285F4; color: white; padding: 10px 20px; '
@@ -176,9 +198,15 @@ def show_login_page():
             '</a>',
             unsafe_allow_html=True
         )
-        
     except Exception as e:
-        st.error(f"Error setting up sign-in: {str(e)}")
+        st.error(f"Error setting up Google sign-in: {str(e)}")
+    
+    # Divider
+    st.markdown("<div style='text-align: center; margin: 20px 0;'>OR</div>", unsafe_allow_html=True)
+    
+    # Show email login
+    show_email_login()
+
 
 def is_authenticated():
     """Check if user is authenticated."""
