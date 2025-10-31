@@ -191,7 +191,7 @@ async def watch_task_status(task_id):
     try:
         while True:
             track_status = await get_track_status(task_id)
-            if track_status["status"] == "completed":
+            if track_status["status"] == "composed":
                 url = track_status["meta"]["track_url"]
                 mp3_buffer = await handle_track_file_in_memory(url)
                 if mp3_buffer:
