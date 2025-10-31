@@ -10,7 +10,7 @@ import streamlit as st
 import random
 
 
-import ffmpeg
+#import ffmpeg
 from io import BytesIO
 from datetime import datetime, timedelta
 
@@ -214,7 +214,7 @@ async def watch_task_status(task_id):
             await asyncio.sleep(10)
     except Exception as e:
         st.error(f"❌ Error monitoring task: {str(e)}")
-        
+
 
 async def create_and_compose(genre):
     """Create and compose a new track of the specified genre."""
