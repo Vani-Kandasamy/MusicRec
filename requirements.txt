@@ -3,22 +3,11 @@ streamlit>=1.32.0
 nest_asyncio>=1.5.6  # For asyncio support in Streamlit
 python-dotenv>=1.0.0  # For environment variables
 
-# Authentication & Web
-google-auth-oauthlib>=1.0.0
-google-auth>=2.0.0
-requests>=2.25.0
-aiohttp>=3.8.0  # For async HTTP requests
-
-# Audio Processing
-soundfile>=0.12.1
-ffmpeg-python>=0.2.0
-numpy>=1.24.0  # Required by soundfile
-librosa>=0.10.0  # For audio analysis
-
-# Core Dependencies
-streamlit>=1.32.0
-nest_asyncio>=1.5.6  # For asyncio support in Streamlit
-python-dotenv>=1.0.0  # For environment variables
+# Firebase
+firebase-admin>=6.2.0  # Firebase Admin SDK
+google-cloud-firestore>=2.11.1  # Required for Firestore
+google-api-python-client>=2.0.0  # Required for Firebase Admin
+google-auth>=2.0.0  # Authentication for Firebase
 
 # HTTP/API Clients
 aiohttp>=3.9.0  # For async HTTP requests
@@ -40,4 +29,3 @@ xgboost>=2.0.0
 scikit-learn>=1.3.2
 pandas>=2.0.0
 joblib>=1.3.0
-numpy>=1.24.0
