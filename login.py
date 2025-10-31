@@ -143,7 +143,7 @@ def show_login_page():
     """Display the login page with Google sign-in button."""
     st.title("🎵 Music for Mental Health")
     st.image(
-        "https://img.goodfon.com/original/1920x1080/8/71/fireman-fire-man.jpg",
+        "https://cdn.punchng.com/wp-content/uploads/2022/03/28122921/Brain-Train-Blog-Image-2.jpg",
         use_column_width=True,
         caption="Your personal music therapy companion"
     )
