@@ -97,7 +97,7 @@ def get_user_info(code):
 def perform_login():
     """Handle the login flow."""
     try:
-        query_params = st.experimental_get_query_params()
+        query_params = st.query_params()
         code = query_params.get('code', [None])[0]
         state = query_params.get('state', [None])[0]
         error = query_params.get('error', [None])[0]
@@ -143,9 +143,9 @@ def show_login_page():
     """Display the login page with Google sign-in button."""
     st.title("🎵 Music for Mental Health")
     st.image(
-        "https://cdn.punchng.com/wp-content/uploads/2022/03/28122921/Brain-Train-Blog-Image-2.jpg",
-        use_column_width=True,
-        caption="Your personal music therapy companion"
+    "https://cdn.punchng.com/wp-content/uploads/2022/03/28122921/Brain-Train-Blog-Image-2.jpg",
+    use_container_width=True,  # Changed from use_column_width
+    caption="Your personal music therapy companion"
     )
     
     st.markdown("### Sign in to continue")
