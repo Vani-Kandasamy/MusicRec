@@ -9,13 +9,15 @@ import soundfile as sf
 import streamlit as st
 import random
 
+
+import ffmpeg
+from io import BytesIO
 from datetime import datetime, timedelta
 
 import time
 
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
-
 
 # Allow asyncio to run nested within Streamlit
 nest_asyncio.apply()
@@ -125,8 +127,7 @@ async def compose_track(request_data):
             async with session.post(
                 f"{BACKEND_V1_API_URL}/tracks/compose",
                 json=request_data,
-                headers={"Authorization": f"Bearer {BACKEND_API_HEADER_KEY}"},
-                timeout=aiohttp.ClientTimeout(total=30)
+                headers={"Authorization": f"Bearer {BACKEND_API_HEADER_KEY}"}
             ) as response:
                 if response.status != 200:
                     error_text = await response.text()
@@ -155,48 +156,61 @@ async def get_track_status(task_id):
         st.error(f"❌ Error checking track status: {str(e)}")
         return {"status": "failed"}
 
-async def handle_track_file(file_path, url):
-    """Download and process the generated track."""
+async def handle_track_file_in_memory(url):
+    """Download and convert the generated track for direct playback."""
     try:
-        # Download the file
+        # Download the WAV data into memory
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 response.raise_for_status()
-                async with aiofiles.open(file_path, "wb") as f:
-                    await f.write(await response.read())
-        
-        # Convert to MP3 using soundfile and numpy
-        data, samplerate = sf.read(file_path)
-        mp3_path = file_path.replace('.wav', '.mp3')
-        sf.write(mp3_path, data, samplerate, format='mp3')
-        return True
-        
+                wav_data = await response.read()
+
+        # Use ffmpeg to convert WAV to MP3 in memory
+        input_buffer = BytesIO(wav_data)
+        input_buffer.seek(0)
+
+        output_buffer = BytesIO()
+        stream = (
+            ffmpeg
+            .input('pipe:0', format='wav')
+            .output('pipe:1', format='mp3')
+            .run_async(pipe_stdin=True, pipe_stdout=True, pipe_stderr=True)
+        )
+        out, err = stream.communicate(input=input_buffer.read())
+        output_buffer.write(out)
+        output_buffer.seek(0)
+
+        return output_buffer
+
     except Exception as e:
         st.error(f"❌ Error processing audio file: {str(e)}")
-        return False
+        return None
 
-async def watch_task_status(task_id, file_path):
+async def watch_task_status(task_id):
     """Monitor the status of a track generation task."""
-    while True:
-        track_status = await get_track_status(task_id)
-        if track_status["status"] == "completed":
-            url = track_status["meta"]["track_url"]
-            await handle_track_file(file_path, url)
-            break
-        elif track_status["status"] == "failed":
-            st.error("Music generation failed.")
-            break
-        await asyncio.sleep(10)
+    try:
+        while True:
+            track_status = await get_track_status(task_id)
+            if track_status["status"] == "completed":
+                url = track_status["meta"]["track_url"]
+                mp3_buffer = await handle_track_file_in_memory(url)
+                if mp3_buffer:
+                    st.audio(mp3_buffer.read(), format='audio/mp3')
+                    st.success("✅ Music generated successfully!")
+                break
+            elif track_status["status"] == "failed":
+                st.error("Music generation failed.")
+                break
+            await asyncio.sleep(10)
+    except Exception as e:
+        st.error(f"❌ Error monitoring task: {str(e)}")
 
 async def create_and_compose(genre):
     """Create and compose a new track of the specified genre."""
     if not BACKEND_API_HEADER_KEY:
         st.error("❌ Music generation is not available. Missing API key.")
-        return
+        return False
 
-    file_path = os.path.join(os.getcwd(), "composed_track.wav")
-    mp3_path = file_path.replace('.wav', '.mp3')
-    
     try:
         with st.spinner('🎵 Composing your personalized music...'):
             track_meta = {
@@ -206,65 +220,16 @@ async def create_and_compose(genre):
                 },
                 "format": "wav"
             }
-            
+
             task_id = await compose_track(track_meta)
             if not task_id:
-                raise Exception("Failed to start music generation")
-            
-            # Clean up any existing files
-            for f in [file_path, mp3_path]:
-                if os.path.exists(f):
-                    os.remove(f)
-            
-            # Wait for the track to be ready with no progress bar
-            attempt = 0
-            start_time = time.time()
-            status_message = st.empty()
+                st.error("Failed to start music generation.")
+                return False
 
-            while True:
-                try:
-                    attempt += 1
-                    elapsed_minutes = int((time.time() - start_time) / 60)
-                    status_message.text(f"Generating your {genre} track... ({elapsed_minutes} min elapsed)")
-                    
-                    track_status = await get_track_status(task_id)
-                    
-                    if track_status["status"] == "completed":
-                        url = track_status.get("meta", {}).get("track_url")
-                        if not url:
-                            raise Exception("No track URL in response")
-                        
-                        if await handle_track_file(file_path, url):
-                            if os.path.exists(mp3_path):
-                                status_message.empty()  # Clear the status message
-                                st.audio(mp3_path)
-                                st.success("✅ Music generated successfully!")
-                                return True
-                        break
-                        
-                    elif track_status["status"] == "failed":
-                        error_msg = track_status.get("error", "Unknown error occurred")
-                        raise Exception(f"Music generation failed: {error_msg}")
-                    
-                    # Increase wait time gradually, with a maximum of 30 seconds between checks
-                    wait_time = min(30, 5 + (attempt // 3))
-                    await asyncio.sleep(wait_time)
-                    
-                except Exception as e:
-                    status_message.text(f"Encountered an issue, retrying... (Attempt {attempt})")
-                    await asyncio.sleep(10)  # Wait before retrying on error
-    
+            await watch_task_status(task_id)
+            return True
+
     except Exception as e:
         st.error(f"❌ Error generating music: {str(e)}")
         st.info("💡 Tip: Check your internet connection and API key if this error persists.")
-        return False
-        
-    finally:
-        # Clean up
-        for f in [file_path, mp3_path]:
-            if os.path.exists(f):
-                try:
-                    os.remove(f)
-                except:
-                    pass
         return False
