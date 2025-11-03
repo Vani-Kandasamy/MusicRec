@@ -80,14 +80,26 @@ def handle_google_callback():
     params = st.query_params
     if "code" in params and "state" in params:
         try:
-            if 'oauth_state' not in st.session_state or params["state"][0] != st.session_state.oauth_state:
-                st.error("Invalid state parameter")
+            # Get the state from URL parameters
+            state = params["state"][0] if isinstance(params["state"], list) else params["state"]
+            
+            # Debug output
+            st.write("Session state:", st.session_state)
+            st.write("URL state:", state)
+            
+            if 'oauth_state' not in st.session_state:
+                st.error("No OAuth state found in session. Please try logging in again.")
+                return
+                
+            if state != st.session_state.oauth_state:
+                st.error("Invalid state parameter. Possible CSRF attack detected.")
                 return
 
             oauth_flow = create_oauth_flow()
-            oauth_flow.fetch_token(
-                code=params["code"][0],
-                authorization_response=st.query_params["redirect_uri"][0] if "redirect_uri" in st.query_params else ""
+            oauth_flow.redirect_uri = REDIRECT_URI
+            token_response = oauth_flow.fetch_token(
+                code=params["code"][0] if isinstance(params["code"], list) else params["code"],
+                authorization_response=st.query_params.url
             )
             
             # Get user info
@@ -101,12 +113,20 @@ def handle_google_callback():
             st.session_state.update({
                 'user_authenticated': True,
                 'user_name': user_info.get('name', 'User'),
-                'user_email': user_info.get('email')
+                'user_email': user_info.get('email'),
+                'access_token': oauth_flow.credentials.token
             })
             
-            # Clear the URL parameters
-            st.experimental_set_query_params()
+            # Clear the OAuth state after successful authentication
+            st.session_state.pop('oauth_state', None)
+            
+            # Clear URL parameters
+            st.query_params.clear()
             st.rerun()
 
         except Exception as e:
             st.error(f"Authentication failed: {str(e)}")
+            st.write("Debug info:", {
+                "params": dict(params),
+                "session_state": dict(st.session_state)
+            })
