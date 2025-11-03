@@ -62,6 +62,9 @@ def handle_google_callback():
     params = st.query_params
     if "code" in params and "state" in params:
         try:
+            st.write("Debug - Callback received. Checking state...")
+            st.write(f"Session state: {st.session_state.get('oauth_state')}")
+            st.write(f"URL state: {params['state']}")
             # Verify state
             if 'oauth_state' not in st.session_state or params["state"][0] != st.session_state.oauth_state:
                 st.error("Invalid state parameter")
@@ -117,4 +120,4 @@ def logout():
     for key in ['user_authenticated', 'user_name', 'user_email', 'access_token', 'oauth_state', 'auth_redirect']:
         st.session_state.pop(key, None)
     st.query_params.clear()
-    st.rerun()
+    st.rerun()  # Add this line back to refresh the page after logout
