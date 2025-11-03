@@ -144,7 +144,7 @@ async def main():
             st.title("🎵 Your Music Dashboard")
             st.write(f"Welcome to your personalized music experience, {st.session_state.get('user_name', 'User')}!")
             user_email = get_current_user()
-            user_name = st.user.name
+            user_name = st.session_state.get('user_name', 'User')
 
             # Initialize Spotify client
             sp_client = initialize_spotify()
@@ -165,7 +165,8 @@ async def main():
             
             # Add logout button
             if st.sidebar.button("Logout"):
-                st.logout()
+                st.session_state.pop('user_authenticated', None)
+                st.session_state.pop('user_name', None)
                 st.rerun()
                 
             # Get or create user profile
