@@ -24,7 +24,7 @@ nest_asyncio.apply()
 
 # Load Beatoven AI key from Streamlit secrets
 BACKEND_V1_API_URL = "https://public-api.beatoven.ai/api/v1"
-BACKEND_API_HEADER_KEY = st.secrets['music']["BEATOVEN_API_KEY"]
+BACKEND_API_HEADER_KEY = st.secrets["BEATOVEN_API_KEY"]
 
 if not BACKEND_API_HEADER_KEY:
     st.error("❌ Beatoven API key is not configured. Please check your secrets.toml file.")
@@ -101,8 +101,8 @@ async def get_spotify_playlist(genre, sp_client=None):
                 st.error("❌ Spotify API credentials not configured.")
                 return None
             sp_client = spotipy.Spotify(auth_manager=SpotifyClientCredentials(
-                client_id=st.secrets['music']["SPOTIFY_CLIENT_ID"],
-                client_secret=st.secrets['music']["SPOTIFY_CLIENT_SECRET"]
+                client_id=st.secrets["SPOTIFY_CLIENT_ID"],
+                client_secret=st.secrets["SPOTIFY_CLIENT_SECRET"]
             ))
             
         results = sp_client.search(q=genre, type='playlist', limit=5)
