@@ -31,7 +31,7 @@ def get_flow():
                 'https://www.googleapis.com/auth/userinfo.email',
                 'https://www.googleapis.com/auth/userinfo.profile'
             ],
-            redirect_uri=redirect_uri
+            redirect_uri=st.secrets['auth']["CALLBACK_URL"]  # Use the same redirect_uri from secrets
         )
     except Exception as e:
         st.error(f"Error initializing OAuth flow: {str(e)}")
