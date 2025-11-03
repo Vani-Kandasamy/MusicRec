@@ -2,8 +2,8 @@
 import streamlit as st
 from google_auth_oauthlib.flow import Flow
 import requests
+from urllib.parse import urlencode
 
-# Move secrets check to a function to handle missing secrets gracefully
 def get_google_credentials():
     try:
         return {
@@ -42,23 +42,31 @@ def show_login_page():
     """Show login/logout UI and handle authentication state."""
     if not is_authenticated():
         st.write("### Log in with Google")
-        if st.button('Log in', type="primary"):
-            oauth_flow = create_oauth_flow()
-            oauth_flow.redirect_uri = REDIRECT_URI
-            authorization_url, state = oauth_flow.authorization_url(
-                access_type='offline',
-                include_granted_scopes='true',
-                prompt='select_account'
-            )
-            st.session_state['oauth_state'] = state
-            st.query_params["auth_url"] = authorization_url
-            st.rerun()
+        if st.button('Log in', type="primary", key="google_login_button"):
+            try:
+                oauth_flow = create_oauth_flow()
+                oauth_flow.redirect_uri = REDIRECT_URI
+                authorization_url, state = oauth_flow.authorization_url(
+                    access_type='offline',
+                    include_granted_scopes='true',
+                    prompt='select_account'
+                )
+                
+                # Store the state in session
+                st.session_state['oauth_state'] = state
+                
+                # Use JavaScript to redirect
+                js = f"window.location.href = '{authorization_url}';"
+                st.components.v1.html(f"<script>{js}</script>", height=0, width=0)
+                
+            except Exception as e:
+                st.error(f"Failed to initialize login: {str(e)}")
     else:
         st.write(f"Welcome, {st.session_state.get('user_name', 'User')}!")
-        if st.button("Log out", type="secondary"):
+        if st.button("Log out", type="secondary", key="logout_button"):
             for key in ['user_authenticated', 'user_name', 'user_email', 'oauth_state']:
                 st.session_state.pop(key, None)
-            st.set_query_params()
+            st.query_params.clear()
             st.rerun()
 
 def is_authenticated():
@@ -79,33 +87,63 @@ def handle_google_callback():
     params = st.query_params
     if "code" in params and "state" in params:
         try:
-            if 'oauth_state' not in st.session_state or params["state"][0] != st.session_state.oauth_state:
-                st.error("Invalid state parameter")
+            # Get the state and code from URL parameters
+            state = params.get("state", [None])[0]
+            code = params.get("code", [None])[0]
+            
+            if not state or not code:
+                st.error("Missing required parameters in the callback URL")
+                return
+
+            if 'oauth_state' not in st.session_state or state != st.session_state.oauth_state:
+                st.error("Invalid state parameter. Please try logging in again.")
                 return
 
             oauth_flow = create_oauth_flow()
-            oauth_flow.fetch_token(
-                code=params["code"][0],
-                authorization_response=st.query_params["redirect_uri"][0] if "redirect_uri" in st.query_params else ""
+            oauth_flow.redirect_uri = REDIRECT_URI
+            
+            # Build the full redirect URL for token exchange
+            redirect_response = f"{REDIRECT_URI}?{urlencode(params)}"
+            
+            # Exchange the authorization code for a token
+            token_response = oauth_flow.fetch_token(
+                code=code,
+                authorization_response=redirect_response
             )
             
             # Get user info
             user_info_response = requests.get(
                 'https://www.googleapis.com/oauth2/v1/userinfo',
                 headers={'Authorization': f'Bearer {oauth_flow.credentials.token}'},
+                timeout=10
             )
             user_info = user_info_response.json()
+
+            if 'error' in user_info:
+                raise Exception(f"Google API error: {user_info.get('error_description', 'Unknown error')}")
 
             # Store user info in session
             st.session_state.update({
                 'user_authenticated': True,
                 'user_name': user_info.get('name', 'User'),
-                'user_email': user_info.get('email')
+                'user_email': user_info.get('email'),
+                'access_token': oauth_flow.credentials.token
             })
             
-            # Clear the URL parameters
-            st.set_query_params()
+            # Clear the OAuth state after successful authentication
+            st.session_state.pop('oauth_state', None)
+            
+            # Clear URL parameters
+            st.query_params.clear()
+            
+            # Force a rerun to update the UI
             st.rerun()
 
         except Exception as e:
             st.error(f"Authentication failed: {str(e)}")
+            st.write("Debug info:", {
+                "error_type": type(e).__name__,
+                "error_details": str(e)
+            })
+            if hasattr(e, 'response') and hasattr(e.response, 'text'):
+                st.json(e.response.text)
