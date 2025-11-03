@@ -46,6 +46,8 @@ def show_login_page():
             try:
                 oauth_flow = create_oauth_flow()
                 oauth_flow.redirect_uri = REDIRECT_URI
+                
+                # Generate the authorization URL
                 authorization_url, state = oauth_flow.authorization_url(
                     access_type='offline',
                     include_granted_scopes='true',
@@ -55,15 +57,29 @@ def show_login_page():
                 # Store the state in session
                 st.session_state['oauth_state'] = state
                 
-                # Use JavaScript to redirect
-                js = f"window.location.href = '{authorization_url}';"
-                st.components.v1.html(f"<script>{js}</script>", height=0, width=0)
+                # Create a form with a hidden input for the auth URL
+                st.markdown(f"""
+                <form action="{authorization_url}" method="get" target="_self">
+                    <button type="submit" style="
+                        background-color: #4CAF50;
+                        color: white;
+                        padding: 10px 20px;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 16px;
+                    ">
+                        Continue with Google
+                    </button>
+                </form>
+                """, unsafe_allow_html=True)
                 
             except Exception as e:
                 st.error(f"Failed to initialize login: {str(e)}")
     else:
         st.write(f"Welcome, {st.session_state.get('user_name', 'User')}!")
         if st.button("Log out", type="secondary", key="logout_button"):
+            # Clear all session data
             for key in ['user_authenticated', 'user_name', 'user_email', 'oauth_state']:
                 st.session_state.pop(key, None)
             st.query_params.clear()
