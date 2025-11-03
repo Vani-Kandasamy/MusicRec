@@ -1,7 +1,7 @@
 # app.py
 
 import streamlit as st
-from login import show_login_page, is_authenticated, get_current_user, handle_google_callback
+import login
 from database import get_user_profile, create_initial_user_profile, display_stored_user_data, update_user_mood
 from music import predict_favorite_genre, create_and_compose, get_spotify_playlist
 import spotipy
@@ -133,25 +133,35 @@ async def main():
             layout="wide"
         )
         
-        # Handle OAuth callback if this is a redirect
-        if "code" in st.query_params:
-            if handle_google_callback():
-                st.rerun()
-        
-        # Show login page if not authenticated
-        if not is_authenticated():
-            show_login_page()
-            return
+        if "code" in st.query_params and "state" in st.query_params:
+            login.handle_google_callback()
 
-        # Get current user
-        user = get_current_user()
-        if not user:
-            st.error("Failed to get user information. Please try logging in again.")
-            show_login_page()
-            return
+        login.show_login_page()
 
-        user_email = user.get('email')
-        user_name = user.get('name')
+        st.divider()
+
+        # --- Main Application Content ---
+
+        # We only show the main app content if the user is authenticated
+        if login.is_authenticated():
+            st.write("### 🔒 Your App's Super-Secret Content")
+            
+            user = login.get_current_user()
+            st.write(f"Welcome, **{user['name']}**!")
+            st.write(f"Your email is: **{user['email']}**")
+            
+            st.balloons()
+            
+            st.write("This content is only visible to logged-in users.")
+            
+            # Example: Show the access token (for demo purposes)
+            if 'access_token' in st.session_state:
+                st.write("Debug info (for demo):")
+                st.write(f"Access Token (first 10 chars): `{st.session_state['access_token'][:10]}...`")
+
+        else:
+            st.info("Please log in to see the super-secret content.")
+
 
         st.title("🎵 Your Music Dashboard")
         st.write(f"Welcome to your personalized music experience, {user.get('name', 'User')}")
