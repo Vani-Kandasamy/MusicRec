@@ -33,8 +33,8 @@ def initialize_spotify():
             return None
             
         return spotipy.Spotify(auth_manager=SpotifyClientCredentials(
-            client_id=st.secrets['music']["SPOTIFY_CLIENT_ID"],
-            client_secret=st.secrets['music']["SPOTIFY_CLIENT_SECRET"]
+            client_id=st.secrets["SPOTIFY_CLIENT_ID"],
+            client_secret=st.secrets["SPOTIFY_CLIENT_SECRET"]
         ))
     except Exception as e:
         st.error(f"❌ Failed to initialize Spotify client: {str(e)}")
