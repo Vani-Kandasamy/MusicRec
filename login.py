@@ -51,14 +51,15 @@ def show_login_page():
                 prompt='select_account'
             )
             st.session_state['oauth_state'] = state
-            st.query_params["auth_url"] = authorization_url
-            st.rerun()
+            # Use JavaScript to redirect to the authorization URL
+            js = f"window.open('{authorization_url}')"
+            st.components.v1.html(f"<script>{js}</script>", height=0, width=0)
     else:
         st.write(f"Welcome, {st.session_state.get('user_name', 'User')}!")
         if st.button("Log out", type="secondary"):
             for key in ['user_authenticated', 'user_name', 'user_email', 'oauth_state']:
                 st.session_state.pop(key, None)
-            st.experimental_set_query_params()
+            st.query_params.clear()
             st.rerun()
 
 def is_authenticated():
