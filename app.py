@@ -149,7 +149,7 @@ async def main():
         if not user:
             st.error("Failed to get user information")
             return
-            
+
         user_email = user.get('email')
         user_name = user.get('name')
 
@@ -193,13 +193,11 @@ async def main():
                 return
         
         # Show the main application
-        await show_music_recommendations(user_profile, sp_client, model)
-    else:
-        show_login_page()         
+        await show_music_recommendations(user_profile, sp_client, model)    
 
-except Exception as e:
-    st.error(f"An error occurred: {str(e)}")
-    st.stop()
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
+        st.stop()
 
 if __name__ == "__main__":
     import asyncio
