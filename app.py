@@ -11,7 +11,10 @@ import asyncio
 from datetime import datetime
 import pickle
 from pathlib import Path
+import nest_asyncio
 
+# Apply nest_asyncio to allow nested event loops
+nest_asyncio.apply()
 
 def load_model():
     """Load the trained XGBoost model."""
@@ -81,13 +84,6 @@ async def show_music_recommendations(user_profile, sp_client, model):
             except Exception as e:
                 st.error(f"❌ Failed to fetch playlist: {str(e)}")
 
-
-def show_error_page(message):
-    """Display an error page with a message."""
-    st.error(f"❌ {message}")
-    if st.button("Return to Home"):
-        st.rerun()
-
 def track_mood(user_email, current_mood=None):
     """Display mood tracking form and save the data."""
     st.subheader("How are you feeling today?")
@@ -137,20 +133,21 @@ async def main():
             layout="wide"
         )
         
-        # Show login UI
-        
-        # Handle OAuth callback first
-        handle_google_callback()
+        # Handle OAuth callback if this is a redirect
+        if "code" in st.query_params:
+            if handle_google_callback():
+                st.experimental_rerun()
         
         # Show login page if not authenticated
         if not is_authenticated():
             show_login_page()
             return
 
-        
+        # Get current user
         user = get_current_user()
         if not user:
-            st.error("Failed to get user information")
+            st.error("Failed to get user information. Please try logging in again.")
+            show_login_page()
             return
 
         user_email = user.get('email')
@@ -178,11 +175,9 @@ async def main():
         
         
         # Add logout button
-        if st.sidebar.button("Logout", type="secondary"):
-            for key in ['user_authenticated', 'user_name', 'user_email', 'oauth_state']:
-                st.session_state.pop(key, None)
-            st.query_params.clear()
-            st.rerun()
+        if st.sidebar.button("Logout", type="secondary", key="logout_button"):
+            logout()  # This will handle all the cleanup
+            st.rerun()  # This will refresh the page to show the login screen
             
         # Get or create user profile
         user_profile = get_user_profile(user_email)
@@ -204,7 +199,4 @@ async def main():
         st.stop()
 
 if __name__ == "__main__":
-    import asyncio
-    import nest_asyncio
-    nest_asyncio.apply()
     asyncio.run(main())
