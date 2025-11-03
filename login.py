@@ -44,7 +44,7 @@ def show_login_page():
         # Display login button
         if st.button('Log in with Google', type="primary"):
             st.session_state['auth_redirect'] = authorization_url
-            st.experimental_rerun()
+            st.rerun()
         
         # Handle redirect if needed
         if 'auth_redirect' in st.session_state:
@@ -117,4 +117,4 @@ def logout():
     for key in ['user_authenticated', 'user_name', 'user_email', 'access_token', 'oauth_state', 'auth_redirect']:
         st.session_state.pop(key, None)
     st.query_params.clear()
-    st.experimental_rerun()
+    st.rerun()
