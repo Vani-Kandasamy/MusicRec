@@ -139,8 +139,11 @@ async def main():
         
         # Show login UI
         
+        # Handle OAuth callback first
+        handle_google_callback()
+        
+        # Show login page if not authenticated
         if not is_authenticated():
-            handle_google_callback()
             show_login_page()
             return
 
@@ -175,9 +178,10 @@ async def main():
         
         
         # Add logout button
-        if st.sidebar.button("Logout"):
-            st.session_state.pop('user_authenticated', None)
-            st.session_state.pop('user_name', None)
+        if st.sidebar.button("Logout", type="secondary"):
+            for key in ['user_authenticated', 'user_name', 'user_email', 'oauth_state']:
+                st.session_state.pop(key, None)
+            st.query_params.clear()
             st.rerun()
             
         # Get or create user profile
@@ -201,4 +205,6 @@ async def main():
 
 if __name__ == "__main__":
     import asyncio
+    import nest_asyncio
+    nest_asyncio.apply()
     asyncio.run(main())
