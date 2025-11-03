@@ -142,7 +142,7 @@ async def main():
 
         if is_authenticated():
             st.title("🎵 Your Music Dashboard")
-            st.write(f"Welcome to your personalized music experience, {st.experimental_user.name}!")
+            st.write(f"Welcome to your personalized music experience, {st.session_state.get('user_name', 'User')}!")
             user_email = get_current_user()
             user_name = st.user.name
 
