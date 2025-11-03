@@ -42,40 +42,30 @@ def show_login_page():
     """Show login/logout UI and handle authentication state."""
     if not is_authenticated():
         st.write("### Log in with Google")
-        if st.button('Log in', type="primary", key="google_login_button"):
-            try:
-                oauth_flow = create_oauth_flow()
-                oauth_flow.redirect_uri = REDIRECT_URI
-                
-                # Generate the authorization URL
-                authorization_url, state = oauth_flow.authorization_url(
-                    access_type='offline',
-                    include_granted_scopes='true',
-                    prompt='select_account'
-                )
-                
-                # Store the state in session
-                st.session_state['oauth_state'] = state
-                
-                # Create a form with a hidden input for the auth URL
-                st.markdown(f"""
-                <form action="{authorization_url}" method="get" target="_self">
-                    <button type="submit" style="
-                        background-color: #4CAF50;
-                        color: white;
-                        padding: 10px 20px;
-                        border: none;
-                        border-radius: 4px;
-                        cursor: pointer;
-                        font-size: 16px;
-                    ">
-                        Continue with Google
-                    </button>
-                </form>
-                """, unsafe_allow_html=True)
-                
-            except Exception as e:
-                st.error(f"Failed to initialize login: {str(e)}")
+        
+        # Create the OAuth flow and get the URL
+        try:
+            oauth_flow = create_oauth_flow()
+            oauth_flow.redirect_uri = REDIRECT_URI
+            authorization_url, state = oauth_flow.authorization_url(
+                access_type='offline',
+                include_granted_scopes='true',
+                prompt='select_account'
+            )
+            
+            # Store the state in session
+            st.session_state['oauth_state'] = state
+            
+            # Use st.link_button for the redirect
+            st.link_button(
+                "Continue with Google", 
+                authorization_url,
+                type="primary"
+            )
+            
+        except Exception as e:
+            st.error(f"Failed to initialize login: {str(e)}")
+            st.exception(e)  # Show full traceback for debugging
     else:
         st.write(f"Welcome, {st.session_state.get('user_name', 'User')}!")
         if st.button("Log out", type="secondary", key="logout_button"):
