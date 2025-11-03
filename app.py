@@ -1,17 +1,12 @@
 # app.py
 
 import streamlit as st
-import login
-from database import get_user_profile, create_initial_user_profile, display_stored_user_data, update_user_mood
+import asyncio
+from login_simple import show_login_page, is_authenticated, get_current_user, logout
 from music import predict_favorite_genre, create_and_compose, get_spotify_playlist
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
-import random
-import asyncio
-from datetime import datetime
-import pickle
-from pathlib import Path
-import nest_asyncio
+
 
 # Apply nest_asyncio to allow nested event loops
 nest_asyncio.apply()
@@ -133,39 +128,18 @@ async def main():
             layout="wide"
         )
         
-        if "code" in st.query_params and "state" in st.query_params:
-            login.handle_google_callback()
-
-        login.show_login_page()
-
-        st.divider()
-
-        # --- Main Application Content ---
-
-        # We only show the main app content if the user is authenticated
-        if login.is_authenticated():
-            st.write("### 🔒 Your App's Super-Secret Content")
-            
-            user = login.get_current_user()
-            st.write(f"Welcome, **{user['name']}**!")
-            st.write(f"Your email is: **{user['email']}**")
-            
-            st.balloons()
-            
-            st.write("This content is only visible to logged-in users.")
-            
-            # Example: Show the access token (for demo purposes)
-            if 'access_token' in st.session_state:
-                st.write("Debug info (for demo):")
-                st.write(f"Access Token (first 10 chars): `{st.session_state['access_token'][:10]}...`")
-
-        else:
-            st.info("Please log in to see the super-secret content.")
-
-
-        st.title("🎵 Your Music Dashboard")
-        st.write(f"Welcome to your personalized music experience, {user.get('name', 'User')}")
         
+        # Show login page if not authenticated
+        if not is_authenticated():
+            show_login_page()
+            return
+
+        # Get current user
+        user = get_current_user()
+        if not user:
+            st.error("Failed to get user information. Please try logging in again.")
+            show_login_page()
+            return
 
         # Initialize Spotify client
         sp_client = initialize_spotify()
@@ -184,13 +158,18 @@ async def main():
                 use_column_width=True)
         
         
-        # Add logout button
-        if st.sidebar.button("Logout", type="secondary", key="logout_button"):
-            logout()  # This will handle all the cleanup
-            st.rerun()  # This will refresh the page to show the login screen
+        # Add logout button in sidebar
+        if st.sidebar.button("Logout", type="secondary"):
+            logout()
+            st.rerun()
+            
             
         # Get or create user profile
-        user_profile = get_user_profile(user_email)
+        user_profile = {
+            'email': user['email'],
+            'name': user['name']
+            # Add any additional profile fields as needed
+        }
         
         if user_profile is None:
             # First-time user - show profile creation
