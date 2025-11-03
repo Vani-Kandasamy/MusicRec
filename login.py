@@ -90,10 +90,6 @@ def get_current_user():
 
 def handle_google_callback():
     """Handle the OAuth callback from Google."""
-    import streamlit.components.v1 as components
-    from urllib.parse import urlencode
-    import time
-    
     params = st.query_params
     if "code" in params and "state" in params:
         try:
@@ -104,85 +100,27 @@ def handle_google_callback():
             st.write("Session state:", st.session_state)
             st.write("URL state:", state)
             
-            # Try to get state from session first, then from cookies
             if 'oauth_state' not in st.session_state:
-                # Create a placeholder for the state
-                state_placeholder = st.empty()
+                st.error("No OAuth state found in session. Please try logging in again.")
+                return
                 
-                # JavaScript to get the cookie
-                get_cookie_js = """
-                <script>
-                function getCookie(name) {
-                    const value = `; ${document.cookie}`;
-                    const parts = value.split(`; ${name}=`);
-                    if (parts.length === 2) return parts.pop().split(';').shift();
-                }
-                const state = getCookie('oauth_state');
-                const element = window.parent.document.getElementById('state_placeholder');
-                if (element) {
-                    element.value = state || '';
-                    element.dispatchEvent(new Event('input'));
-                }
-                </script>
-                """
-                
-                # Add a hidden input to capture the state
-                state_value = state_placeholder.text_input(
-                    "state_input",
-                    key="state_input",
-                    label_visibility="collapsed",
-                    placeholder="Loading..."
-                )
-                
-                # Inject the JavaScript
-                components.html(get_cookie_js, height=0, width=0)
-                
-                # Wait a moment for the JavaScript to execute
-                time.sleep(1)
-                
-                # Get the state from the input
-                state_from_cookie = st.session_state.get("state_input")
-                
-                if not state_from_cookie or state_from_cookie == "Loading...":
-                    st.error("Could not retrieve OAuth state. Please try logging in again.")
-                    return
-                    
-                st.session_state['oauth_state'] = state_from_cookie
-                state_placeholder.empty()  # Remove the input
-            
             if state != st.session_state.oauth_state:
-                st.error("""
-                    Invalid state parameter. Possible CSRF attack detected.
-                    \n\n**Troubleshooting:**
-                    - Try clearing your browser cookies for this site
-                    - Try in an incognito window
-                    - Make sure you're not using any ad blockers that might interfere
-                """)
+                st.error("Invalid state parameter. Possible CSRF attack detected.")
                 return
 
-            # Create OAuth flow and exchange code for token
             oauth_flow = create_oauth_flow()
             oauth_flow.redirect_uri = REDIRECT_URI
-            
-            # Build the full redirect URL
-            redirect_response = f"{REDIRECT_URI}?{urlencode(params)}"
-            
-            # Exchange the authorization code for a token
             token_response = oauth_flow.fetch_token(
                 code=params["code"][0] if isinstance(params["code"], list) else params["code"],
-                authorization_response=redirect_response
+                authorization_response=st.query_params.url
             )
             
             # Get user info
             user_info_response = requests.get(
                 'https://www.googleapis.com/oauth2/v1/userinfo',
                 headers={'Authorization': f'Bearer {oauth_flow.credentials.token}'},
-                timeout=10
             )
             user_info = user_info_response.json()
-
-            if 'error' in user_info:
-                raise Exception(f"Google API error: {user_info.get('error_description', 'Unknown error')}")
 
             # Store user info in session
             st.session_state.update({
@@ -192,26 +130,16 @@ def handle_google_callback():
                 'access_token': oauth_flow.credentials.token
             })
             
-            # Clear the OAuth state and input after successful authentication
+            # Clear the OAuth state after successful authentication
             st.session_state.pop('oauth_state', None)
-            if 'state_input' in st.session_state:
-                st.session_state.pop('state_input')
             
-            # Clear URL parameters and cookies
+            # Clear URL parameters
             st.query_params.clear()
-            components.html("""
-                <script>
-                document.cookie = 'oauth_state=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-                </script>
-            """, height=0, width=0)
-            
-            # Force a rerun to update the UI
             st.rerun()
 
         except Exception as e:
             st.error(f"Authentication failed: {str(e)}")
             st.write("Debug info:", {
                 "params": dict(params),
-                "session_state": {k: v for k, v in st.session_state.items() if k != '_last_rerun'}
+                "session_state": dict(st.session_state)
             })
-            st.exception(e)  # Show full traceback for debugging
