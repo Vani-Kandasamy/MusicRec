@@ -136,7 +136,7 @@ async def main():
         # Handle OAuth callback if this is a redirect
         if "code" in st.query_params:
             if handle_google_callback():
-                st.experimental_rerun()
+                st.rerun()
         
         # Show login page if not authenticated
         if not is_authenticated():
