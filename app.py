@@ -1,7 +1,7 @@
 # app.py
 
 import streamlit as st
-from login import is_authenticated, get_current_user, show_login_page, session_logout
+from login import show_login_page, is_authenticated
 from database import get_user_profile, create_initial_user_profile, display_stored_user_data
 from music import predict_favorite_genre, create_and_compose, get_spotify_playlist
 import spotipy
@@ -11,6 +11,7 @@ import asyncio
 from datetime import datetime
 import pickle
 from pathlib import Path
+
 
 def load_model():
     """Load the trained XGBoost model."""
@@ -71,6 +72,7 @@ async def show_music_recommendations(user_profile, sp_client, model):
             try:
                 genre = predict_favorite_genre(user_profile,model)
                 playlist_url = await get_spotify_playlist(genre,sp_client)  # Make sure this is awaited
+                
                 if playlist_url:
                     st.success(f"Here's a {genre} playlist for you:")
                     st.markdown(f"[Open Playlist in Spotify]({playlist_url})")
@@ -135,54 +137,51 @@ async def main():
             layout="wide"
         )
         
-        # Check authentication
-        if not is_authenticated():
-            show_login_page()
-            return
-            
-        # Get current user info
-        user = get_current_user()
-        user_email = user['email']
-        user_name = user['name']
-        
-        # Initialize Spotify client
-        sp_client = initialize_spotify()
-        if not sp_client:
-            st.error("Failed to initialize Spotify client. Please check your credentials.")
-            return
+        # Show login UI
+        show_login_page()
 
-        # Load the trained model
-        model = load_model()
-        if not model:
-            st.error("Failed to load the prediction model.")
-            return
-        
-        # Display header
-        st.image("https://cdn.punchng.com/wp-content/uploads/2022/03/28122921/Brain-Train-Blog-Image-2.jpg", 
-                use_column_width=True)
-        
-        # Show welcome message
-        st.sidebar.success(f"Welcome, {user_name}!")
-        
-        # Add logout button
-        if st.sidebar.button("Logout"):
-            session_logout()
-            st.rerun()
+        if is_authenticated():
+            st.title("🎵 Your Music Dashboard")
+            st.write(f"Welcome to your personalized music experience, {st.experimental_user.name}!")
+            user_email = get_current_user()
+            user_name = st.user.name
+
+            # Initialize Spotify client
+            sp_client = initialize_spotify()
+            if not sp_client:
+                st.error("Failed to initialize Spotify client. Please check your credentials.")
+                return
+
+            # Load the trained model
+            model = load_model()
+            if not model:
+                st.error("Failed to load the prediction model.")
+                return
             
-        # Get or create user profile
-        user_profile = get_user_profile(user_email)
-        
-        if user_profile is None:
-            # First-time user - show profile creation
-            user_profile = create_initial_user_profile(user_email)
+            # Display header
+            st.image("https://cdn.punchng.com/wp-content/uploads/2022/03/28122921/Brain-Train-Blog-Image-2.jpg", 
+                    use_column_width=True)
+            
+            
+            # Add logout button
+            if st.sidebar.button("Logout"):
+                st.logout()
+                st.rerun()
+                
+            # Get or create user profile
+            user_profile = get_user_profile(user_email)
             
             if user_profile is None:
-                # User didn't complete profile
-                st.warning("Please complete your profile to continue.")
-                return
-        
-        # Show the main application
-        await show_music_recommendations(user_profile, sp_client, model)
+                # First-time user - show profile creation
+                user_profile = create_initial_user_profile(user_email)
+                
+                if user_profile is None:
+                    # User didn't complete profile
+                    st.warning("Please complete your profile to continue.")
+                    return
+            
+            # Show the main application
+            await show_music_recommendations(user_profile, sp_client, model)
             
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
