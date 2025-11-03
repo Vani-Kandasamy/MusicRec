@@ -4,6 +4,7 @@ import streamlit as st
 import asyncio
 from login import show_login_page, is_authenticated, get_current_user, logout
 from music import predict_favorite_genre, create_and_compose, get_spotify_playlist
+from database import get_user_profile, create_initial_user_profile, display_stored_user_data, update_user_mood
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 import nest_asyncio
