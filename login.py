@@ -2,7 +2,6 @@
 import streamlit as st
 from google_auth_oauthlib.flow import Flow
 import requests
-from urllib.parse import urlparse, parse_qs
 
 # Move secrets check to a function to handle missing secrets gracefully
 def get_google_credentials():
@@ -52,7 +51,7 @@ def show_login_page():
                 prompt='select_account'
             )
             st.session_state['oauth_state'] = state
-            st.experimental_set_query_params(auth_url=authorization_url)
+            st.query_params["auth_url"] = authorization_url
             st.rerun()
     else:
         st.write(f"Welcome, {st.session_state.get('user_name', 'User')}!")
@@ -77,7 +76,7 @@ def get_current_user():
 
 def handle_google_callback():
     """Handle the OAuth callback from Google."""
-    params = st.experimental_get_query_params()
+    params = st.query_params
     if "code" in params and "state" in params:
         try:
             if 'oauth_state' not in st.session_state or params["state"][0] != st.session_state.oauth_state:
@@ -87,7 +86,7 @@ def handle_google_callback():
             oauth_flow = create_oauth_flow()
             oauth_flow.fetch_token(
                 code=params["code"][0],
-                authorization_response=st.experimental_get_query_params()["redirect_uri"][0]
+                authorization_response=st.query_params["redirect_uri"][0] if "redirect_uri" in st.query_params else ""
             )
             
             # Get user info
