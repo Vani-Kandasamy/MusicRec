@@ -16,15 +16,14 @@ import secrets
 # OAuth2 configuration
 def get_flow():
     try:
-        redirect_uri = st.secrets.get("CALLBACK_URL", "http://localhost:8501")
         return Flow.from_client_config(
             client_config={
                 "web": {
-                    "client_id": st.secrets["GOOGLE_CLIENT_ID"],
-                    "client_secret": st.secrets["GOOGLE_CLIENT_SECRET"],
+                    "client_id": st..secrets['auth']["GOOGLE_CLIENT_ID"],
+                    "client_secret": st..secrets['auth']["GOOGLE_CLIENT_SECRET"],
                     "auth_uri": "https://accounts.google.com/o/oauth2/auth",
                     "token_uri": "https://oauth2.googleapis.com/token",
-                    "redirect_uris": [redirect_uri]
+                    "redirect_uris": [st.secrets['auth']["CALLBACK_URL"]] 
                 }
             },
             scopes=[
