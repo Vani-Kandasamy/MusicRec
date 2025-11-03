@@ -1,7 +1,7 @@
 # app.py
 
 import streamlit as st
-from login import show_login_page, is_authenticated, get_current_user
+from login import show_login_page, is_authenticated, get_current_user, handle_google_callback
 from database import get_user_profile, create_initial_user_profile, display_stored_user_data
 from music import predict_favorite_genre, create_and_compose, get_spotify_playlist
 import spotipy
@@ -138,55 +138,68 @@ async def main():
         )
         
         # Show login UI
-        show_login_page()
+        
+        if not is_authenticated():
+            handle_google_callback()
+            show_login_page()
+            return
 
-        if is_authenticated():
-            st.title("🎵 Your Music Dashboard")
-            st.write(f"Welcome to your personalized music experience, {st.session_state.get('user_name', 'User')}!")
-            user_email = get_current_user()
-            user_name = st.session_state.get('user_name', 'User')
+        
+        user = get_current_user()
+        if not user:
+            st.error("Failed to get user information")
+            return
+            
+        user_email = user.get('email')
+        user_name = user.get('name')
 
-            # Initialize Spotify client
-            sp_client = initialize_spotify()
-            if not sp_client:
-                st.error("Failed to initialize Spotify client. Please check your credentials.")
-                return
+        st.title("🎵 Your Music Dashboard")
+        st.write(f"Welcome to your personalized music experience, {user.get('name', 'User')}")
+        
 
-            # Load the trained model
-            model = load_model()
-            if not model:
-                st.error("Failed to load the prediction model.")
-                return
+        # Initialize Spotify client
+        sp_client = initialize_spotify()
+        if not sp_client:
+            st.error("Failed to initialize Spotify client. Please check your credentials.")
+            return
+
+        # Load the trained model
+        model = load_model()
+        if not model:
+            st.error("Failed to load the prediction model.")
+            return
+        
+        # Display header
+        st.image("https://cdn.punchng.com/wp-content/uploads/2022/03/28122921/Brain-Train-Blog-Image-2.jpg", 
+                use_column_width=True)
+        
+        
+        # Add logout button
+        if st.sidebar.button("Logout"):
+            st.session_state.pop('user_authenticated', None)
+            st.session_state.pop('user_name', None)
+            st.rerun()
             
-            # Display header
-            st.image("https://cdn.punchng.com/wp-content/uploads/2022/03/28122921/Brain-Train-Blog-Image-2.jpg", 
-                    use_column_width=True)
-            
-            
-            # Add logout button
-            if st.sidebar.button("Logout"):
-                st.session_state.pop('user_authenticated', None)
-                st.session_state.pop('user_name', None)
-                st.rerun()
-                
-            # Get or create user profile
-            user_profile = get_user_profile(user_email)
+        # Get or create user profile
+        user_profile = get_user_profile(user_email)
+        
+        if user_profile is None:
+            # First-time user - show profile creation
+            user_profile = create_initial_user_profile(user_email)
             
             if user_profile is None:
-                # First-time user - show profile creation
-                user_profile = create_initial_user_profile(user_email)
-                
-                if user_profile is None:
-                    # User didn't complete profile
-                    st.warning("Please complete your profile to continue.")
-                    return
-            
-            # Show the main application
-            await show_music_recommendations(user_profile, sp_client, model)
-            
-    except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
-        st.stop()
+                # User didn't complete profile
+                st.warning("Please complete your profile to continue.")
+                return
+        
+        # Show the main application
+        await show_music_recommendations(user_profile, sp_client, model)
+    else:
+        show_login_page()         
+
+except Exception as e:
+    st.error(f"An error occurred: {str(e)}")
+    st.stop()
 
 if __name__ == "__main__":
     import asyncio
