@@ -89,7 +89,6 @@ async def main():
         st.session_state.user_email = None
     if 'user_name' not in st.session_state:
         st.session_state.user_name = None
-    """Main application function."""
     try:
         # Set page config
         st.set_page_config(
