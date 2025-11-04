@@ -127,9 +127,7 @@ def predict_favorite_genre(user_profile, model):
         
         return GENRE_MAPPING[index]
         
-    except Exception as e:
-        st.error(f"❌ Error predicting genre: {str(e)}")
-        # Return a default genre in case of error
+    except Exception:
         return "Pop"
 
 async def get_spotify_playlist(genre, sp_client=None):
@@ -145,8 +143,8 @@ async def get_spotify_playlist(genre, sp_client=None):
                 st.error("❌ Spotify API credentials not configured.")
                 return None
             sp_client = spotipy.Spotify(auth_manager=SpotifyClientCredentials(
-                client_id=st.secrets["SPOTIFY_CLIENT_ID"],
-                client_secret=st.secrets["SPOTIFY_CLIENT_SECRET"]
+                client_id=st.secrets['music']["SPOTIFY_CLIENT_ID"],
+                client_secret=st.secrets['music']["SPOTIFY_CLIENT_SECRET"]
             ))
             
         results = sp_client.search(q=genre, type='playlist', limit=5)
@@ -157,8 +155,7 @@ async def get_spotify_playlist(genre, sp_client=None):
         playlist = random.choice(results['playlists']['items'])
         return playlist['external_urls']['spotify']
         
-    except Exception as e:
-        st.error(f"❌ Failed to fetch Spotify playlist: {str(e)}")
+    except Exception:
         return None
 
 async def compose_track(request_data):
@@ -179,10 +176,8 @@ async def compose_track(request_data):
                 data = await response.json()
                 return data.get("task_id")
     except asyncio.TimeoutError:
-        st.error("❌ Request to music generation service timed out.")
         return None
-    except Exception as e:
-        st.error(f"❌ Error in compose_track: {str(e)}")
+    except Exception:
         return None
 
 async def get_track_status(task_id):
@@ -196,8 +191,7 @@ async def get_track_status(task_id):
             ) as response:
                 response.raise_for_status()
                 return await response.json()
-    except Exception as e:
-        st.error(f"❌ Error checking track status: {str(e)}")
+    except Exception:
         return {"status": "failed"}
 
 async def play_audio_from_url(url):
@@ -206,8 +200,7 @@ async def play_audio_from_url(url):
         # Display the audio player with the direct URL
         st.audio(url, format='audio/wav')
         return True
-    except Exception as e:
-        st.error(f"❌ Error playing audio: {str(e)}")
+    except Exception:
         return False
 
 async def watch_task_status(task_id):
@@ -224,8 +217,8 @@ async def watch_task_status(task_id):
                 st.error("Music generation failed.")
                 break
             await asyncio.sleep(10)
-    except Exception as e:
-        st.error(f"❌ Error monitoring task: {str(e)}")
+    except Exception:
+        pass
 
 
 async def create_and_compose(genre):
@@ -252,7 +245,5 @@ async def create_and_compose(genre):
             await watch_task_status(task_id)
             return True
 
-    except Exception as e:
-        st.error(f"❌ Error generating music: {str(e)}")
-        st.info("💡 Tip: Check your internet connection and API key if this error persists.")
+    except Exception:
         return False
