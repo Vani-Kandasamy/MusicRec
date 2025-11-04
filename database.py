@@ -258,45 +258,78 @@ def display_stored_user_data(user_profile):
                         break
                 st.metric(display_name, value)
     
-    # Mood Settings - Always visible and editable
     st.markdown("### Current Mood")
     with st.form("mood_form"):
-        mood_cols = st.columns(5)
-        with mood_cols[0]:
-            openness = st.number_input("Openness", 0, 100, 
-                                    value=int(user_profile.get('Exploratory', 50)),
-                                    key="mood_openness")
-        with mood_cols[1]:
-            anxiety = st.number_input("Anxiety", 0, 100, 
-                                    value=int(user_profile.get('Anxiety', 50)),
-                                    key="mood_anxiety")
-        with mood_cols[2]:
-            depression = st.number_input("Depression", 0, 100, 
-                                      value=int(user_profile.get('Depression', 50)),
-                                      key="mood_depression")
-        with mood_cols[3]:
-            insomnia = st.number_input("Insomnia", 0, 100, 
-                                    value=int(user_profile.get('Insomnia', 50)),
-                                    key="mood_insomnia")
-        with mood_cols[4]:
-            ocd = st.number_input("OCD", 0, 100, 
-                               value=int(user_profile.get('OCD', 50)),
-                               key="mood_ocd")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Openness as Yes/No select box
+            openness = st.selectbox(
+                "Open to new experiences?",
+                ['Yes', 'No'],
+                index=0 if user_profile.get('Exploratory', 1) == 1 else 1,
+                key="mood_openness"
+            )
+            anxiety = st.slider(
+                "Anxiety (1-10)", 
+                min_value=1, 
+                max_value=10, 
+                value=int(user_profile.get('Anxiety', 5)),
+                key="mood_anxiety"
+            )
+            depression = st.slider(
+                "Depression (1-10)", 
+                min_value=1, 
+                max_value=10, 
+                value=int(user_profile.get('Depression', 5)),
+                key="mood_depression"
+            )
+        
+        with col2:
+            insomnia = st.slider(
+                "Insomnia (1-10)", 
+                min_value=1, 
+                max_value=10, 
+                value=int(user_profile.get('Insomnia', 5)),
+                help="1 = No trouble sleeping, 10 = Severe insomnia",
+                key="mood_insomnia"
+            )
+            ocd = st.slider(
+                "OCD (1-10)", 
+                min_value=1, 
+                max_value=10, 
+                value=int(user_profile.get('OCD', 5)),
+                help="1 = No symptoms, 10 = Severe symptoms",
+                key="mood_ocd"
+            )
         
         # Save button for mood updates
         if st.form_submit_button("Update Mood"):
+            # Get user email from the profile or session state
+            user_email = user_profile.get('email') or (st.session_state.get('user_email') if 'user_email' in st.session_state else None)
+            
+            if not user_email:
+                st.error("Could not determine user email. Please log in again.")
+                return
+                
             # Update the user profile with new mood values
-            user_profile.update({
-                'Exploratory': openness,
+            mood_update = {
+                'Exploratory': 1 if openness == 'Yes' else 0,
                 'Anxiety': anxiety,
                 'Depression': depression,
                 'Insomnia': insomnia,
                 'OCD': ocd,
                 'LastUpdated': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            })
+            }
+            
+            # Update local profile
+            user_profile.update(mood_update)
             
             # Save the updated profile
-            if save_user_profile(st.session_state['user_info']['email'], user_profile):
+            if save_user_profile(user_email, user_profile):
+                # Update session state if needed
+                if 'user_info' in st.session_state and st.session_state.user_info is not None:
+                    st.session_state.user_info.update(mood_update)
                 st.success("Mood updated successfully!")
             else:
                 st.error("Failed to update mood. Please try again.")
