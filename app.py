@@ -82,45 +82,6 @@ async def show_music_recommendations(user_profile, sp_client, model):
             except Exception as e:
                 st.error(f"❌ Failed to fetch playlist: {str(e)}")
 
-def track_mood(user_email, current_mood=None):
-    """Display mood tracking form and save the data."""
-    st.subheader("How are you feeling today?")
-    
-    with st.form("mood_tracking_form"):
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Changed from slider to Yes/No selectbox
-            exploratory = st.selectbox(
-                "Are you open to exploring new music today?",
-                ['Yes', 'No'],
-                index=0 if not current_mood or current_mood.get('Exploratory', 1) == 1 else 1
-            )
-            anxiety = st.slider("Anxiety level (1-10)", 1, 10, 
-                              current_mood.get('Anxiety', 5) if current_mood else 5)
-            depression = st.slider("Mood level (1-10)", 1, 10, 
-                                 current_mood.get('Depression', 5) if current_mood else 5)
-        
-        with col2:
-            insomnia = st.slider("Sleep quality (1-10)", 1, 10, 
-                               current_mood.get('Insomnia', 5) if current_mood else 5)
-            ocd = st.slider("Focus level (1-10)", 1, 10, 
-                           current_mood.get('OCD', 5) if current_mood else 5)
-        
-        if st.form_submit_button("Save Mood"):
-            mood_data = {
-                'Exploratory': 1 if exploratory == 'Yes' else 0,  # Encode as 1 for Yes, 0 for No
-                'Anxiety': anxiety,
-                'Depression': depression,
-                'Insomnia': insomnia,
-                'OCD': ocd,
-                'last_mood_update': datetime.now().isoformat()
-            }
-            if update_user_mood(user_email, mood_data):
-                st.success("Mood data saved successfully!")
-                return mood_data
-    return None
-
 async def main():
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
