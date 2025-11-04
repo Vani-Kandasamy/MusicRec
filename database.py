@@ -122,20 +122,20 @@ def show_user_profile_form():
         col1, col2 = st.columns(2)
         
         with col1:
-            classical = st.selectbox("Classical", frequency_options, index=2)  # Default to 'Sometimes'
-            edm = st.selectbox("EDM", frequency_options, index=1)  # Default to 'Rarely'
-            folk = st.selectbox("Folk", frequency_options, index=2)  # Default to 'Sometimes'
-            gospel = st.selectbox("Gospel", frequency_options, index=1)  # Default to 'Rarely'
-            hiphop = st.selectbox("Hip Hop", frequency_options, index=3)  # Default to 'Very frequently'
-            jazz = st.selectbox("Jazz", frequency_options, index=2)  # Default to 'Sometimes'
+            classical = st.selectbox("Classical", frequency_options, index=2)
+            edm = st.selectbox("EDM", frequency_options, index=1)
+            folk = st.selectbox("Folk", frequency_options, index=2)
+            gospel = st.selectbox("Gospel", frequency_options, index=1)
+            hiphop = st.selectbox("Hip Hop", frequency_options, index=3)
+            jazz = st.selectbox("Jazz", frequency_options, index=2)
             
         with col2:
-            kpop = st.selectbox("K-Pop", frequency_options, index=3)  # Default to 'Very frequently'
-            metal = st.selectbox("Metal", frequency_options, index=1)  # Default to 'Rarely'
-            pop = st.selectbox("Pop", frequency_options, index=1)  # Default to 'Rarely'
-            rb = st.selectbox("R&B", frequency_options, index=3)  # Default to 'Very frequently'
-            rock = st.selectbox("Rock", frequency_options, index=2)  # Default to 'Sometimes'
-            vgm = st.selectbox("Video Game Music", frequency_options, index=1)  # Default to 'Rarely'
+            kpop = st.selectbox("K-Pop", frequency_options, index=3)
+            metal = st.selectbox("Metal", frequency_options, index=1)
+            pop = st.selectbox("Pop", frequency_options, index=1)
+            rb = st.selectbox("R&B", frequency_options, index=3)
+            rock = st.selectbox("Rock", frequency_options, index=2)
+            vgm = st.selectbox("Video Game Music", frequency_options, index=1)
         
         # Additional Information
         st.markdown("### Additional Information")
@@ -147,47 +147,59 @@ def show_user_profile_form():
         
         exploratory = st.selectbox("Do you like exploring new music?", ['Yes', 'No'])
         foreign_languages = st.selectbox("Do you understand foreign languages?", ['No', 'Yes'])
+        
+        # Mood Initialization
+        st.markdown("### Initial Mood Settings")
+        st.info("Please set your current mood. You can update this later at any time.")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            openness = st.selectbox("Open to new experiences?", ['Yes', 'No'], 
+                                 help="Are you open to trying new types of music?")
+            anxiety = st.slider("Anxiety (1-10)", 1, 10, 5,
+                             help="Your current anxiety level (1=low, 10=high)")
+            depression = st.slider("Mood (1-10)", 1, 10, 5,
+                                help="Your current mood (1=low, 10=high)")
+        with col2:
+            insomnia = st.slider("Sleep Quality (1-10)", 1, 10, 5,
+                              help="Your recent sleep quality (1=poor, 10=excellent)")
+            ocd = st.slider("Focus Level (1-10)", 1, 10, 5,
+                          help="Your current ability to focus (1=poor, 10=excellent)")
+
         music_effect = st.selectbox("Does music affect your mood?", music_effect_options)
-        
         bpm = st.slider("Preferred BPM (Beats Per Minute)", 60, 200, 120)
-        
-        submitted = st.form_submit_button("Save Profile")
-        
-        if submitted:
-            # Encode categorical variables
-            def encode_frequency(value):
-                return frequency_options.index(value)
-                
-            def encode_yes_no(value):
-                return 1 if value == 'Yes' else 0
-            
-            # Create user data with encoded values
+
+        if st.form_submit_button("Save Profile"):
             user_data = {
                 'Age': age,
                 'Hours per day': hours_per_day,
-                'While working': encode_yes_no(while_working),
-                'Instrumentalist': encode_yes_no(instrumentalist),
-                'Composer': encode_yes_no(composer),
-                'Exploratory': encode_yes_no(exploratory),
-                'Foreign languages': encode_yes_no(foreign_languages),
+                'While working': while_working,
+                'Frequency_Classical': classical,
+                'Frequency_EDM': edm,
+                'Frequency_Folk': folk,
+                'Frequency_Gospel': gospel,
+                'Frequency_HipHop': hiphop,
+                'Frequency_Jazz': jazz,
+                'Frequency_KPop': kpop,
+                'Frequency_Metal': metal,
+                'Frequency_Pop': pop,
+                'Frequency_RnB': rb,
+                'Frequency_Rock': rock,
+                'Frequency_VGM': vgm,
+                'Instrumentalist': instrumentalist,
+                'Composer': composer,
+                'Exploratory': 1 if exploratory == 'Yes' else 0,
+                'ForeignLanguages': 1 if foreign_languages == 'Yes' else 0,
+                'MusicEffects': music_effect,
                 'BPM': bpm,
-                # Music Frequencies with encoded values
-                'Frequency [Classical]': encode_frequency(classical),
-                'Frequency [EDM]': encode_frequency(edm),
-                'Frequency [Folk]': encode_frequency(folk),
-                'Frequency [Gospel]': encode_frequency(gospel),
-                'Frequency [Hip hop]': encode_frequency(hiphop),
-                'Frequency [Jazz]': encode_frequency(jazz),
-                'Frequency [K pop]': encode_frequency(kpop),
-                'Frequency [Metal]': encode_frequency(metal),
-                'Frequency [Pop]': encode_frequency(pop),
-                'Frequency [R&B]': encode_frequency(rb),
-                'Frequency [Rock]': encode_frequency(rock),
-                'Frequency [Video game music]': encode_frequency(vgm),
-                # Music effect
-                'Music effects': 0 if music_effect == 'Improve' else 1,
-                # Metadata
-                'LastUpdated': datetime.now().isoformat()
+                # Mood data
+                'Openness': 1 if openness == 'Yes' else 0,
+                'Anxiety': anxiety,
+                'Depression': depression,
+                'Insomnia': insomnia,
+                'OCD': ocd,
+                'LastUpdated': datetime.now().isoformat(),
+                'MoodLastUpdated': datetime.now().isoformat()
             }
             return user_data
     return None
@@ -222,23 +234,29 @@ def display_stored_user_data(user_profile):
     with st.expander("Music Preferences", expanded=False):
         pref_columns = st.columns(4)
         genres = [
-            ('Classical', 'Frequency_Classical'),
-            ('EDM', 'Frequency_EDM'),
-            ('Folk', 'Frequency_Folk'),
-            ('Gospel', 'Frequency_Gospel'),
-            ('Hip Hop', 'Frequency_HipHop'),
-            ('Jazz', 'Frequency_Jazz'),
-            ('K-Pop', 'Frequency_KPop'),
-            ('Metal', 'Frequency_Metal'),
-            ('Pop', 'Frequency_Pop'),
-            ('R&B', 'Frequency_RnB'),
-            ('Rock', 'Frequency_Rock'),
-            ('Video Game Music', 'Frequency_VGM')
+            ('Classical', ['Frequency_Classical', 'Classical']),
+            ('EDM', ['Frequency_EDM', 'EDM']),
+            ('Folk', ['Frequency_Folk', 'Folk']),
+            ('Gospel', ['Frequency_Gospel', 'Gospel']),
+            ('Hip Hop', ['Frequency_HipHop', 'Hip Hop', 'HipHop']),
+            ('Jazz', ['Frequency_Jazz', 'Jazz']),
+            ('K-Pop', ['Frequency_KPop', 'K-Pop', 'KPop']),
+            ('Metal', ['Frequency_Metal', 'Metal']),
+            ('Pop', ['Frequency_Pop', 'Pop']),
+            ('R&B', ['Frequency_RnB', 'R&B', 'RnB']),
+            ('Rock', ['Frequency_Rock', 'Rock']),
+            ('Video Game Music', ['Frequency_VGM', 'Video Game Music', 'VGM'])
         ]
         
-        for i, (display_name, key) in enumerate(genres):
+        for i, (display_name, possible_keys) in enumerate(genres):
             with pref_columns[i % 4]:
-                st.metric(display_name, user_profile.get(key, 'N/A'))
+                # Try all possible key variations
+                value = 'Not set'
+                for key in possible_keys:
+                    if key in user_profile:
+                        value = user_profile[key]
+                        break
+                st.metric(display_name, value)
     
     # Mood Settings - Always visible and editable
     st.markdown("### Current Mood")
