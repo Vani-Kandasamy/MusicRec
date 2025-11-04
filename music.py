@@ -145,8 +145,8 @@ async def get_spotify_playlist(genre, sp_client=None):
                 st.error("❌ Spotify API credentials not configured.")
                 return None
             sp_client = spotipy.Spotify(auth_manager=SpotifyClientCredentials(
-                client_id=st.secrets['music']["SPOTIFY_CLIENT_ID"],
-                client_secret=st.secrets['music']["SPOTIFY_CLIENT_SECRET"]
+                client_id=st.secrets["SPOTIFY_CLIENT_ID"],
+                client_secret=st.secrets["SPOTIFY_CLIENT_SECRET"]
             ))
             
         results = sp_client.search(q=genre, type='playlist', limit=5)
