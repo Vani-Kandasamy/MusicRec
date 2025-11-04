@@ -82,13 +82,22 @@ def save_user_profile(user_email, user_data):
         return False
         
 def update_user_mood(user_email, mood_data):
-    """Update user's mood data in the database."""
+    """Update user's mood data in the database.
+    
+    Args:
+        user_email (str): The email of the user
+        mood_data (dict): Dictionary containing mood data to update
+        
+    Returns:
+        bool: True if update was successful, False otherwise
+    """
     try:
         doc_ref = db.collection('users').document(user_email)
-        doc_ref.update(mood_data)
+        # Use set with merge=True to create or update the document
+        doc_ref.set(mood_data, merge=True)
         return True
     except Exception as e:
-        st.error(f"Error updating mood data: {e}")
+        st.error(f"Error updating mood data: {str(e)}")
         return False
 
 def show_user_profile_form():
