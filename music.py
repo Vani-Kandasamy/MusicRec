@@ -24,7 +24,7 @@ nest_asyncio.apply()
 
 # Load Beatoven AI key from Streamlit secrets
 BACKEND_V1_API_URL = "https://public-api.beatoven.ai/api/v1"
-BACKEND_API_HEADER_KEY = st.secrets['music']["BEATOVEN_API_KEY"]
+BACKEND_API_HEADER_KEY = st.secrets["BEATOVEN_API_KEY"]
 
 if not BACKEND_API_HEADER_KEY:
     st.error("❌ Beatoven API key is not configured. Please check your secrets.toml file.")
