@@ -122,6 +122,12 @@ def track_mood(user_email, current_mood=None):
     return None
 
 async def main():
+    if 'authenticated' not in st.session_state:
+        st.session_state.authenticated = False
+    if 'user_email' not in st.session_state:
+        st.session_state.user_email = None
+    if 'user_name' not in st.session_state:
+        st.session_state.user_name = None
     """Main application function."""
     try:
         # Set page config
