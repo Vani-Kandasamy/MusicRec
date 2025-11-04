@@ -4,8 +4,8 @@ import streamlit as st
 # Hardcoded user credentials (email: password)
 USERS = {
     "admin@example.com": "admin123",
-    "user1@example.com": "password1",
-    "user2@example.com": "password2"
+    "user01@example.com": "password1",
+    "user02@example.com": "password2"
 }
 
 def validate_email(email):
