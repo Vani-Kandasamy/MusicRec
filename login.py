@@ -18,7 +18,7 @@ def load_users():
     return {}
 
 USERS = load_users()
-st.write("Loaded users:", USERS)
+#st.write("Loaded users:", USERS)
 def validate_email(email):
     """Basic email validation."""
     return '@' in email and '.' in email.split('@')[-1]
