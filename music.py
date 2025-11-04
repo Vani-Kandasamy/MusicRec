@@ -45,60 +45,92 @@ GENRE_PROMPTS = {
     "Video game music": "Compose an adventurous and dynamic theme suitable for an action-packed video game level."
 }
 
-def predict_favorite_genre(user_profile, model):
+ddef predict_favorite_genre(user_profile, model):
     """Predict the favorite music genre based on user profile using the provided model."""
     try:
-        # Helper function to safely get and convert values
+        # Helper function to safely get and convert values to float32
         def get_feature(key, default=0):
             value = user_profile.get(key, default)
-            # Convert string numbers to int/float if needed
-            if isinstance(value, str) and value.replace('.', '').isdigit():
-                return float(value) if '.' in value else int(value)
+            
+            # Handle None values
+            if value is None:
+                return float(default)
+                
+            # Convert to string for consistent handling
+            if not isinstance(value, str):
+                value = str(value)
+                
+            # Convert string numbers to float
+            if value.replace('.', '').isdigit():
+                return float(value)
+                
             # Handle yes/no fields
-            if isinstance(value, str) and value.lower() in ['yes', 'no']:
-                return 1 if value.lower() == 'yes' else 0
-            return value if value is not None else default
+            if value.lower() in ['yes', 'no']:
+                return 1.0 if value.lower() == 'yes' else 0.0
+                
+            # Handle frequency strings (Never, Rarely, Sometimes, Very frequently)
+            freq_map = {
+                'never': 0.0,
+                'rarely': 1.0,
+                'sometimes': 2.0,
+                'very frequently': 3.0
+            }
+            if value.lower() in freq_map:
+                return freq_map[value.lower()]
+                
+            # Default case - try to convert to float, fallback to default
+            try:
+                return float(value)
+            except (ValueError, TypeError):
+                return float(default)
         
         # Prepare the input features for the model
         input_features = [
-            get_feature('Age', 25),
-            get_feature('Hours per day', 2),
-            1 if str(user_profile.get('While working', 'No')).lower() == 'yes' else 0,
-            1 if str(user_profile.get('Instrumentalist', 'No')).lower() == 'yes' else 0,
-            1 if str(user_profile.get('Composer', 'No')).lower() == 'yes' else 0,
-            1 if str(user_profile.get('Exploratory', 'No')).lower() == 'yes' else 0,
-            1 if str(user_profile.get('Foreign languages', 'No')).lower() == 'yes' else 0,
-            get_feature('BPM', 120),
+            float(get_feature('Age', 25)),
+            float(get_feature('Hours per day', 2)),
+            float(1 if str(user_profile.get('While working', 'No')).lower() == 'yes' else 0),
+            float(1 if str(user_profile.get('Instrumentalist', 'No')).lower() == 'yes' else 0),
+            float(1 if str(user_profile.get('Composer', 'No')).lower() == 'yes' else 0),
+            float(1 if str(user_profile.get('Exploratory', 'No')).lower() == 'yes' else 0),
+            float(1 if str(user_profile.get('Foreign languages', 'No')).lower() == 'yes' else 0),
+            float(get_feature('BPM', 120)),
             # Handle both Frequency_Genre and Frequency [Genre] formats
-            get_feature('Frequency_Classical', get_feature('Frequency [Classical]', 2)),
-            get_feature('Frequency_EDM', get_feature('Frequency [EDM]', 2)),
-            get_feature('Frequency_Folk', get_feature('Frequency [Folk]', 2)),
-            get_feature('Frequency_Gospel', get_feature('Frequency [Gospel]', 2)),
-            get_feature('Frequency_HipHop', get_feature('Frequency [Hip hop]', 2)),
-            get_feature('Frequency_Jazz', get_feature('Frequency [Jazz]', 2)),
-            get_feature('Frequency_KPop', get_feature('Frequency [K pop]', 2)),
-            get_feature('Frequency_Metal', get_feature('Frequency [Metal]', 2)),
-            get_feature('Frequency_Pop', get_feature('Frequency [Pop]', 2)),
-            get_feature('Frequency_RnB', get_feature('Frequency [R&B]', 2)),
-            get_feature('Frequency_Rock', get_feature('Frequency [Rock]', 2)),
-            get_feature('Frequency_VGM', get_feature('Frequency [Video game music]', 2)),
-            get_feature('Anxiety', 5),
-            get_feature('Depression', 5),
-            get_feature('Insomnia', 5),
-            get_feature('OCD', 5),
-            1 if str(user_profile.get('MusicEffects', 'No')).lower() == 'improve' else 0
+            float(get_feature('Frequency_Classical', get_feature('Frequency [Classical]', 2))),
+            float(get_feature('Frequency_EDM', get_feature('Frequency [EDM]', 2))),
+            float(get_feature('Frequency_Folk', get_feature('Frequency [Folk]', 2))),
+            float(get_feature('Frequency_Gospel', get_feature('Frequency [Gospel]', 2))),
+            float(get_feature('Frequency_HipHop', get_feature('Frequency [Hip hop]', 2))),
+            float(get_feature('Frequency_Jazz', get_feature('Frequency [Jazz]', 2))),
+            float(get_feature('Frequency_KPop', get_feature('Frequency [K pop]', 2))),
+            float(get_feature('Frequency_Metal', get_feature('Frequency [Metal]', 2))),
+            float(get_feature('Frequency_Pop', get_feature('Frequency [Pop]', 2))),
+            float(get_feature('Frequency_RnB', get_feature('Frequency [R&B]', 2))),
+            float(get_feature('Frequency_Rock', get_feature('Frequency [Rock]', 2))),
+            float(get_feature('Frequency_VGM', get_feature('Frequency [Video game music]', 2)))),
+            float(get_feature('Anxiety', 5)),
+            float(get_feature('Depression', 5)),
+            float(get_feature('Insomnia', 5)),
+            float(get_feature('OCD', 5)),
+            float(1 if str(user_profile.get('MusicEffects', 'No')).lower() == 'improve' else 0)
         ]
         
-        # Get prediction from the model
-        prediction = model.predict([input_features])
+        # Ensure all features are float32 and in a 2D numpy array
+        import numpy as np
+        input_array = np.array([input_features], dtype=np.float32)
         
-        index = prediction if isinstance(prediction, int) and 0 <= prediction < len(GENRE_MAPPING) else 0
+        # Get prediction from the model
+        prediction = model.predict(input_array)
+        
+        # Ensure prediction is an integer index
+        index = int(prediction[0]) if len(prediction) > 0 else 0
+        index = max(0, min(index, len(GENRE_MAPPING) - 1))  # Ensure valid index
         
         return GENRE_MAPPING[index]
         
     except Exception as e:
         st.error(f"❌ Error predicting genre: {str(e)}")
-        raise  # Re-raise the exception to handle it in the calling function
+        # Return a default genre in case of error
+        return "Pop"
 
 async def get_spotify_playlist(genre, sp_client=None):
     """Fetch a random Spotify playlist for the given genre.
@@ -177,38 +209,6 @@ async def play_audio_from_url(url):
     except Exception as e:
         st.error(f"❌ Error playing audio: {str(e)}")
         return False
-
-'''
-async def handle_track_file_in_memory(url):
-    """Download and convert the generated track for direct playback."""
-    try:
-        # Download the WAV data into memory
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                response.raise_for_status()
-                wav_data = await response.read()
-
-        # Use ffmpeg to convert WAV to MP3 in memory
-        input_buffer = BytesIO(wav_data)
-        input_buffer.seek(0)
-
-        output_buffer = BytesIO()
-        stream = (
-            ffmpeg
-            .input('pipe:0', format='wav')
-            .output('pipe:1', format='mp3')
-            .run_async(pipe_stdin=True, pipe_stdout=True, pipe_stderr=True)
-        )
-        out, err = stream.communicate(input=input_buffer.read())
-        output_buffer.write(out)
-        output_buffer.seek(0)
-
-        return output_buffer
-
-    except Exception as e:
-        st.error(f"❌ Error processing audio file: {str(e)}")
-        return None
-'''
 
 async def watch_task_status(task_id):
     """Monitor the status of a track generation task."""
