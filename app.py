@@ -167,12 +167,9 @@ async def main():
             st.rerun()
             
             
+        user_email = user['email']
         # Get or create user profile
-        user_profile = {
-            'email': user['email'],
-            'name': user['name']
-            # Add any additional profile fields as needed
-        }
+        user_profile = get_user_profile(user_email)
         
         if user_profile is None:
             # First-time user - show profile creation
