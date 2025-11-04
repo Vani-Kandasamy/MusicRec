@@ -106,7 +106,7 @@ ddef predict_favorite_genre(user_profile, model):
             float(get_feature('Frequency_Pop', get_feature('Frequency [Pop]', 2))),
             float(get_feature('Frequency_RnB', get_feature('Frequency [R&B]', 2))),
             float(get_feature('Frequency_Rock', get_feature('Frequency [Rock]', 2))),
-            float(get_feature('Frequency_VGM', get_feature('Frequency [Video game music]', 2)))),
+            float(get_feature('Frequency_VGM', get_feature('Frequency [Video game music]', 2))),
             float(get_feature('Anxiety', 5)),
             float(get_feature('Depression', 5)),
             float(get_feature('Insomnia', 5)),
