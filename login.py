@@ -1,12 +1,23 @@
-# login.py
 import streamlit as st
+import toml
+from pathlib import Path
 
-# Hardcoded user credentials (email: password)
-USERS = {
-    "admin@example.com": "admin123",
-    "user01@example.com": "password1",
-    "user02@example.com": "password2"
-}
+# Load users from secrets.toml
+def load_users():
+    try:
+        # In Streamlit Cloud, use st.secrets directly
+        if hasattr(st, 'secrets') and hasattr(st.secrets, 'users'):
+            return st.secrets.users
+        # For local development with secrets.toml
+        secrets_path = Path(__file__).parent / ".streamlit" / "secrets.toml"
+        if secrets_path.exists():
+            with open(secrets_path) as f:
+                return toml.load(f).get('users', {})
+    except Exception as e:
+        st.error(f"Error loading user credentials: {e}")
+    return {}
+
+USERS = load_users()
 
 def validate_email(email):
     """Basic email validation."""
