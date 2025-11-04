@@ -24,7 +24,7 @@ nest_asyncio.apply()
 
 # Load Beatoven AI key from Streamlit secrets
 BACKEND_V1_API_URL = "https://public-api.beatoven.ai/api/v1"
-BACKEND_API_HEADER_KEY = st.secrets["BEATOVEN_API_KEY"]
+BACKEND_API_HEADER_KEY = st.secrets['music']["BEATOVEN_API_KEY"]
 
 if not BACKEND_API_HEADER_KEY:
     st.error("❌ Beatoven API key is not configured. Please check your secrets.toml file.")
@@ -48,33 +48,45 @@ GENRE_PROMPTS = {
 def predict_favorite_genre(user_profile, model):
     """Predict the favorite music genre based on user profile using the provided model."""
     try:
+        # Helper function to safely get and convert values
+        def get_feature(key, default=0):
+            value = user_profile.get(key, default)
+            # Convert string numbers to int/float if needed
+            if isinstance(value, str) and value.replace('.', '').isdigit():
+                return float(value) if '.' in value else int(value)
+            # Handle yes/no fields
+            if isinstance(value, str) and value.lower() in ['yes', 'no']:
+                return 1 if value.lower() == 'yes' else 0
+            return value if value is not None else default
+        
         # Prepare the input features for the model
         input_features = [
-            user_profile.get('Age', 25),
-            user_profile.get('Hours per day', 2),
-            user_profile.get('While working', 0),
-            user_profile.get('Instrumentalist', 0),
-            user_profile.get('Composer', 0),
-            user_profile.get('Exploratory', 0),  # Binary (0 or 1)
-            user_profile.get('Foreign languages', 0),
-            user_profile.get('BPM', 120),
-            user_profile.get('Frequency [Classical]', 2),
-            user_profile.get('Frequency [EDM]', 2),
-            user_profile.get('Frequency [Folk]', 2),
-            user_profile.get('Frequency [Gospel]', 2),
-            user_profile.get('Frequency [Hip hop]', 2),
-            user_profile.get('Frequency [Jazz]', 2),
-            user_profile.get('Frequency [K pop]', 2),
-            user_profile.get('Frequency [Metal]', 2),
-            user_profile.get('Frequency [Pop]', 2),
-            user_profile.get('Frequency [R&B]', 2),
-            user_profile.get('Frequency [Rock]', 2),
-            user_profile.get('Frequency [Video game music]', 2),
-            user_profile.get('Anxiety', 5),
-            user_profile.get('Depression', 5),
-            user_profile.get('Insomnia', 5),
-            user_profile.get('OCD', 5),
-            user_profile.get('Music effects', 0)
+            get_feature('Age', 25),
+            get_feature('Hours per day', 2),
+            1 if str(user_profile.get('While working', 'No')).lower() == 'yes' else 0,
+            1 if str(user_profile.get('Instrumentalist', 'No')).lower() == 'yes' else 0,
+            1 if str(user_profile.get('Composer', 'No')).lower() == 'yes' else 0,
+            1 if str(user_profile.get('Exploratory', 'No')).lower() == 'yes' else 0,
+            1 if str(user_profile.get('Foreign languages', 'No')).lower() == 'yes' else 0,
+            get_feature('BPM', 120),
+            # Handle both Frequency_Genre and Frequency [Genre] formats
+            get_feature('Frequency_Classical', get_feature('Frequency [Classical]', 2)),
+            get_feature('Frequency_EDM', get_feature('Frequency [EDM]', 2)),
+            get_feature('Frequency_Folk', get_feature('Frequency [Folk]', 2)),
+            get_feature('Frequency_Gospel', get_feature('Frequency [Gospel]', 2)),
+            get_feature('Frequency_HipHop', get_feature('Frequency [Hip hop]', 2)),
+            get_feature('Frequency_Jazz', get_feature('Frequency [Jazz]', 2)),
+            get_feature('Frequency_KPop', get_feature('Frequency [K pop]', 2)),
+            get_feature('Frequency_Metal', get_feature('Frequency [Metal]', 2)),
+            get_feature('Frequency_Pop', get_feature('Frequency [Pop]', 2)),
+            get_feature('Frequency_RnB', get_feature('Frequency [R&B]', 2)),
+            get_feature('Frequency_Rock', get_feature('Frequency [Rock]', 2)),
+            get_feature('Frequency_VGM', get_feature('Frequency [Video game music]', 2)),
+            get_feature('Anxiety', 5),
+            get_feature('Depression', 5),
+            get_feature('Insomnia', 5),
+            get_feature('OCD', 5),
+            1 if str(user_profile.get('MusicEffects', 'No')).lower() == 'improve' else 0
         ]
         
         # Get prediction from the model
@@ -101,8 +113,8 @@ async def get_spotify_playlist(genre, sp_client=None):
                 st.error("❌ Spotify API credentials not configured.")
                 return None
             sp_client = spotipy.Spotify(auth_manager=SpotifyClientCredentials(
-                client_id=st.secrets["SPOTIFY_CLIENT_ID"],
-                client_secret=st.secrets["SPOTIFY_CLIENT_SECRET"]
+                client_id=st.secrets['music']["SPOTIFY_CLIENT_ID"],
+                client_secret=st.secrets['music']["SPOTIFY_CLIENT_SECRET"]
             ))
             
         results = sp_client.search(q=genre, type='playlist', limit=5)
