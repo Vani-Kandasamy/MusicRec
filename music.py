@@ -45,7 +45,7 @@ GENRE_PROMPTS = {
     "Video game music": "Compose an adventurous and dynamic theme suitable for an action-packed video game level."
 }
 
-ddef predict_favorite_genre(user_profile, model):
+def predict_favorite_genre(user_profile, model):
     """Predict the favorite music genre based on user profile using the provided model."""
     try:
         # Helper function to safely get and convert values to float32
