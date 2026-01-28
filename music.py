@@ -214,7 +214,7 @@ async def create_and_compose(genre):
         st.error("Missing `BEATOVEN_API_KEY` in secrets.")
         return
       
-    if st.button("Compose Personal Track"):
+    try:
         # Run the async orchestration
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -228,4 +228,7 @@ async def create_and_compose(genre):
                 st.success("✨ Your track is ready!")
                 st.audio(track_url)
                 st.download_button("Download Track", track_url)
+                
+     except Exception:
+        return False
 
