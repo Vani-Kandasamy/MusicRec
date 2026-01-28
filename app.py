@@ -60,6 +60,7 @@ async def show_music_recommendations(user_profile, sp_client, model):
             with st.spinner('Composing your personalized music...'):
                 try:
                     genre = predict_favorite_genre(user_profile,model)
+                    st.markdown(f'**Predicted genre:** {genre}')
                     await create_and_compose(genre)  # Make sure this is awaited
                 except Exception as e:
                     st.error(f"❌ Error generating music: {str(e)}")
