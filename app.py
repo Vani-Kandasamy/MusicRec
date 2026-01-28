@@ -14,6 +14,7 @@ from pathlib import Path
 # Apply nest_asyncio to allow nested event loops
 nest_asyncio.apply()
 
+@st.cache_resource()
 def load_model():
     """Load the trained XGBoost model."""
     try:
