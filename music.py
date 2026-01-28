@@ -228,7 +228,7 @@ async def create_and_compose(genre):
                 st.success("✨ Your track is ready!")
                 st.audio(track_url)
                 st.download_button("Download Track", track_url)
-                
-     except Exception:
+    
+    except Exception:
         return False
 
