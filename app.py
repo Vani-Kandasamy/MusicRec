@@ -161,7 +161,7 @@ async def main():
     try:
         # Set page config
         st.set_page_config(
-            page_title="TheraBeat AI",
+            page_title="TheraBeat AI - Home",
             page_icon="🎵",
             layout="wide"
         )
