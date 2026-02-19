@@ -2,11 +2,22 @@ import streamlit as st
 import asyncio
 from music import predict_favorite_genre, create_and_compose
 from datetime import datetime
+from auth_wrapper import require_auth
 
+# Set background color to match home page
+st.markdown("""
+<style>
+.stApp {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+</style>
+""", unsafe_allow_html=True)
+
+@require_auth
 async def ai_music_page(user_profile, model):
     """Display AI-generated music page."""
     st.title("🎵 AI-Generated Music")
-    
+        
     # Show user's predicted genre
     try:
         predicted_genre = predict_favorite_genre(user_profile, model)
@@ -14,9 +25,9 @@ async def ai_music_page(user_profile, model):
     except Exception as e:
         predicted_genre = "Pop"
         st.warning(f"Could not predict genre: {str(e)}. Using default: {predicted_genre}")
-    
-    # Music generation section
-    st.header("Generate Personalized Music")
+        
+        # Music generation section
+        st.header("Generate Personalized Music")
     
     col1, col2 = st.columns([2, 1])
     
@@ -26,7 +37,7 @@ async def ai_music_page(user_profile, model):
         if st.button("🎼 Generate AI Music", key="generate_ai_music", type="primary"):
             with st.spinner('🎵 Composing your personalized music...'):
                 try:
-                    success = await create_and_compose(predicted_genre)
+                    success = create_and_compose(predicted_genre)
                     if success:
                         # Store in history
                         if 'music_history' not in st.session_state:
