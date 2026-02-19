@@ -51,9 +51,10 @@ def show_login_page():
                     st.error("Invalid email or password")
     else:
         user = get_current_user()
-        st.write(f"Welcome, {user.get('name', 'User')}!")
-        if st.button("Logout"):
-            logout()
+        if user:
+            st.write(f"Welcome, {user.get('name', 'User')}!")
+            if st.button("Logout"):
+                logout()
 
 def is_authenticated():
     """Check if user is logged in."""
@@ -73,3 +74,6 @@ def logout():
     for key in ['authenticated', 'user_email', 'user_name']:
         st.session_state.pop(key, None)
 
+if __name__ == "__main__":
+    asyncio.run(show_login_page())
+    st.rerun()
