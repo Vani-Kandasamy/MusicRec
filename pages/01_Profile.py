@@ -2,13 +2,9 @@ import streamlit as st
 import asyncio
 from music import predict_favorite_genre
 from database import display_stored_user_data
-from navigation import create_top_navigation
 
 async def profile_page(user_profile, model):
     """Display user profile page."""
-    # Create top navigation
-    create_top_navigation()
-    
     st.title("👤 Your Profile")
     
     # Display user profile information (without mood section)
