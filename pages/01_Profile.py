@@ -1,7 +1,18 @@
 import streamlit as st
 import asyncio
 from database import display_stored_user_data
+from auth_wrapper import require_auth
 
+# Set background color to match home page
+st.markdown("""
+<style>
+.stApp {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+</style>
+""", unsafe_allow_html=True)
+
+@require_auth
 async def profile_page(user_profile, model):
     """Display user profile page."""
     st.title("👤 Your Profile")
