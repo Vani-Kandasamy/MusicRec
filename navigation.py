@@ -1,5 +1,5 @@
 import streamlit as st
-from login_simple import logout
+from login import logout
 
 def create_top_navigation():
     """Create top navigation bar with page links and logout."""
