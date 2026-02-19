@@ -50,67 +50,73 @@ async def current_mood_page():
         with col1:
             # Openness as Yes/No select box
             openness = st.selectbox(
-                "Open to new experiences?",
-                ['Yes', 'No'],
-                index=0 if user_profile.get('Exploratory', 1) == 1 else 1,
-                key="mood_openness",
-                help="Are you open to trying new types of music?"
+                "Openness to new experiences",
+                options=[1, 0],
+                format_func=lambda x: "Yes" if x == 1 else "No",
+                index=0 if user_profile.get('Exploratory', 1) == 1 else 1
             )
+            
+            # Mental Health Sliders
             anxiety = st.slider(
-                "Anxiety Level (1-10)", 
-                min_value=1, 
-                max_value=10, 
-                value=int(user_profile.get('Anxiety', 5)),
-                key="mood_anxiety",
-                help="1 = Very calm, 10 = Very anxious"
+                "Anxiety Level",
+                min_value=0,
+                max_value=10,
+                value=user_profile.get('Anxiety', 5),
+                help="0 = No anxiety, 10 = Severe anxiety"
             )
+            
             depression = st.slider(
-                "Mood Level (1-10)", 
-                min_value=1, 
-                max_value=10, 
-                value=int(user_profile.get('Depression', 5)),
-                key="mood_depression",
-                help="1 = Very low mood, 10 = Very high mood"
+                "Mood Level",
+                min_value=0,
+                max_value=10,
+                value=user_profile.get('Depression', 5),
+                help="0 = Very low mood, 10 = Excellent mood"
             )
         
         with col2:
             insomnia = st.slider(
-                "Sleep Quality (1-10)", 
-                min_value=1, 
-                max_value=10, 
-                value=int(user_profile.get('Insomnia', 5)),
-                help="1 = Excellent sleep, 10 = Very poor sleep",
-                key="mood_insomnia"
+                "Sleep Quality",
+                min_value=0,
+                max_value=10,
+                value=user_profile.get('Insomnia', 5),
+                help="0 = Excellent sleep, 10 = Very poor sleep"
             )
+            
             ocd = st.slider(
-                "Focus Level (1-10)", 
-                min_value=1, 
-                max_value=10, 
-                value=int(user_profile.get('OCD', 5)),
-                help="1 = Very focused, 10 = Very distracted",
-                key="mood_ocd"
+                "Focus Level",
+                min_value=0,
+                max_value=10,
+                value=user_profile.get('OCD', 5),
+                help="0 = Excellent focus, 10 = Difficulty focusing"
+            )
+            
+            # Additional mood factors
+            music_effect = st.slider(
+                "Music's Effect on Mood",
+                min_value=0,
+                max_value=10,
+                value=user_profile.get('Music effects', 5),
+                help="0 = No effect, 10 = Strong effect"
             )
         
-        # Save button for mood updates
-        col1, col2 = st.columns([1, 1])
+        col1, col2 = st.columns(2)
+        
         with col1:
             if st.form_submit_button("Update Mood", type="primary"):
-                # Update the user profile with new mood values
-                mood_update = {
-                    'Exploratory': 1 if openness == 'Yes' else 0,
+                # Update mood data
+                mood_data = {
+                    'Exploratory': openness,
                     'Anxiety': anxiety,
                     'Depression': depression,
                     'Insomnia': insomnia,
                     'OCD': ocd,
+                    'Music effects': music_effect,
                     'MoodLastUpdated': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
                 
-                # Update local profile
-                user_profile.update(mood_update)
+                user_profile.update(mood_data)
                 
-                # Save the updated profile
                 if save_user_profile(user_email, user_profile):
-                    # Update session state
                     st.session_state.user_profile = user_profile
                     st.success("✅ Mood updated successfully!")
                     st.rerun()
@@ -126,6 +132,7 @@ async def current_mood_page():
                     'Depression': 5,
                     'Insomnia': 5,
                     'OCD': 5,
+                    'Music effects': 5,
                     'MoodLastUpdated': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
                 
