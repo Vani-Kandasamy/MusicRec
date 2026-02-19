@@ -1,24 +1,13 @@
+# login.py
 import streamlit as st
-import toml
-from pathlib import Path
 
-# Load users from secrets.toml
-def load_users():
-    try:
-        # In Streamlit Cloud, use st.secrets directly
-        if hasattr(st, 'secrets') and hasattr(st.secrets, 'users'):
-            return st.secrets.users
-        # For local development with secrets.toml
-        secrets_path = Path(__file__).parent / ".streamlit" / "secrets.toml"
-        if secrets_path.exists():
-            with open(secrets_path) as f:
-                return toml.load(f).get('users', {})
-    except Exception as e:
-        st.error(f"Error loading user credentials: {e}")
-    return {}
+# Hardcoded user credentials (email: password)
+USERS = {
+    "admin@example.com": "admin123",
+    "user01@example.com": "password1",
+    "user02@example.com": "password2"
+}
 
-USERS = load_users()
-#st.write("Loaded users:", USERS)
 def validate_email(email):
     """Basic email validation."""
     return '@' in email and '.' in email.split('@')[-1]
@@ -29,6 +18,15 @@ def authenticate(email, password):
 
 def show_login_page():
     """Display login form."""
+    # Hide sidebar during login
+    st.markdown("""
+    <style>
+    [data-testid="stSidebar"] {
+        display: none;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     if not is_authenticated():
         st.write("### Login")
         
@@ -45,6 +43,8 @@ def show_login_page():
                         'user_email': email,
                         'user_name': email.split('@')[0]  # Use part before @ as display name
                     })
+                    # Redirect to main app after successful login
+                    st.switch_page("app_simple.py")
                     st.rerun()
                 else:
                     st.error("Invalid email or password")
