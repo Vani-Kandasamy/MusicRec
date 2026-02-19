@@ -3,7 +3,7 @@ import asyncio
 from database import get_user_profile, save_user_profile, update_user_mood
 from music import predict_favorite_genre
 from datetime import datetime
-from login import is_authenticated, show_login_page
+from login_simple import is_authenticated, show_login_page
 
 # Set background color to match home page
 st.markdown("""
@@ -35,21 +35,21 @@ else:
             st.error("User profile not found. Please complete your profile first.")
             return
     
-    # Mood update form
-    st.header("Update Your Mood")
-    st.write("Track your current emotional state to get better music recommendations.")
-    
-    with st.form("mood_update_form"):
-        col1, col2 = st.columns(2)
+        # Mood update form
+        st.header("Update Your Mood")
+        st.write("Track your current emotional state to get better music recommendations.")
         
-        with col1:
-            # Openness as Yes/No select box
-            openness = st.selectbox(
-                "Openness to new experiences",
-                options=[1, 0],
-                format_func=lambda x: "Yes" if x == 1 else "No",
-                index=0 if user_profile.get('Exploratory', 1) == 1 else 1
-            )
+        with st.form("mood_update_form"):
+            col1, col2 = st.columns(2)
+        
+            with col1:
+                # Openness as Yes/No select box
+                openness = st.selectbox(
+                    "Openness to new experiences",
+                    options=[1, 0],
+                    format_func=lambda x: "Yes" if x == 1 else "No",
+                    index=0 if user_profile.get('Exploratory', 1) == 1 else 1
+                )
             
             # Mental Health Sliders
             anxiety = st.slider(
@@ -67,22 +67,21 @@ else:
                 value=user_profile.get('Depression', 5),
                 help="0 = Very low mood, 10 = Excellent mood"
             )
-        
-        with col2:
+            
             insomnia = st.slider(
-                "Sleep Quality",
+                "Insomnia Level",
                 min_value=0,
                 max_value=10,
                 value=user_profile.get('Insomnia', 5),
-                help="0 = Excellent sleep, 10 = Very poor sleep"
+                help="0 = No insomnia, 10 = Severe insomnia"
             )
             
             ocd = st.slider(
-                "Focus Level",
+                "OCD Level",
                 min_value=0,
                 max_value=10,
                 value=user_profile.get('OCD', 5),
-                help="0 = Excellent focus, 10 = Difficulty focusing"
+                help="0 = No OCD, 10 = Severe OCD"
             )
             
             # Additional mood factors
@@ -94,53 +93,20 @@ else:
                 help="0 = No effect, 10 = Strong effect"
             )
         
-        col1, col2 = st.columns(2)
+            col1, col2 = st.columns(2)
         
-        with col1:
-            if st.form_submit_button("Update Mood", type="primary"):
-                # Update mood data
-                mood_data = {
-                    'Exploratory': openness,
-                    'Anxiety': anxiety,
-                    'Depression': depression,
-                    'Insomnia': insomnia,
-                    'OCD': ocd,
-                    'Music effects': music_effect,
-                    'MoodLastUpdated': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                }
-                
-                user_profile.update(mood_data)
-                
-                if save_user_profile(user_email, user_profile):
-                    st.session_state.user_profile = user_profile
-                    st.success("✅ Mood updated successfully!")
-                    st.rerun()
-                else:
-                    st.error("❌ Failed to update mood. Please try again.")
-        
-        with col2:
-            if st.form_submit_button("Reset to Defaults"):
-                # Reset to default values
-                default_mood = {
-                    'Exploratory': 1,
-                    'Anxiety': 5,
-                    'Depression': 5,
-                    'Insomnia': 5,
-                    'OCD': 5,
-                    'Music effects': 5,
-                    'MoodLastUpdated': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                }
-                
-                user_profile.update(default_mood)
-                
-                if save_user_profile(user_email, user_profile):
-                    st.session_state.user_profile = user_profile
-                    st.success("✅ Mood reset to defaults!")
-                    st.rerun()
-                else:
-                    st.error("❌ Failed to reset mood. Please try again.")
-    
-    # Music Preferences Analysis Section
+            with col1:
+                if st.form_submit_button("Update Mood", type="primary"):
+                    # Update mood data
+                    mood_data = {
+                        'Exploratory': openness,
+                        'Anxiety': anxiety,
+                        'Depression': depression,
+                        'Insomnia': insomnia,
+                        'OCD': ocd,
+                        'Music effects': music_effect,
+                        'MoodLastUpdated': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    }
     st.markdown("---")
     st.header("🎵 Music Preferences Analysis")
     
