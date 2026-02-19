@@ -47,8 +47,8 @@ def show_login_page():
                         'user_name': email.split('@')[0]  # Use part before @ as display name
                     })
                     # Import and run the main app after successful login
-                    import app_simple
-                    asyncio.run(app_simple.main())
+                    import Home
+                    asyncio.run(Home.main())
                     st.rerun()
                 else:
                     st.error("Invalid email or password")
