@@ -1,5 +1,5 @@
 import streamlit as st
-from login import is_authenticated, show_login_page
+from login_simple import is_authenticated, show_login_page
 
 def check_authentication():
     """Check if user is authenticated and show login page if not."""
@@ -8,12 +8,11 @@ def check_authentication():
         return False
     return True
 
-def require_auth():
+def require_auth(func):
     """Decorator to require authentication for a page."""
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            if not check_authentication():
-                return
-            return func(*args, **kwargs)
-        return wrapper
-    return decorator
+    def wrapper(*args, **kwargs):
+        if not is_authenticated():
+            show_login_page()
+            return
+        return func(*args, **kwargs)
+    return wrapper
