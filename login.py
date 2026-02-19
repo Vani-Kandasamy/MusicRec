@@ -47,8 +47,8 @@ def show_login_page():
                         'user_name': email.split('@')[0]  # Use part before @ as display name
                     })
                     # Import and run the main app after successful login
-                    import Home
-                    asyncio.run(Home.main())
+                    import app_simple
+                    asyncio.run(app_simple.main())
                     st.rerun()
                 else:
                     st.error("Invalid email or password")
@@ -76,3 +76,6 @@ def logout():
     for key in ['authenticated', 'user_email', 'user_name']:
         st.session_state.pop(key, None)
 
+if __name__ == "__main__":
+    asyncio.run(show_login_page())
+    st.rerun()
