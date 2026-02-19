@@ -27,18 +27,18 @@ else:
             st.info(f"Your predicted favorite genre: **{predicted_genre}**")
         except Exception as e:
             predicted_genre = "Pop"
-        st.warning(f"Could not predict genre: {str(e)}. Using default: {predicted_genre}")
+            st.warning(f"Could not predict genre: {str(e)}. Using default: {predicted_genre}")
         
-    # Playlist generation section
+        # Playlist generation section
         st.header("Get Personalized Playlists")
         
         if not sp_client:
             st.error("❌ Spotify is not available. Please check your credentials.")
             return
         
-    col1, col2 = st.columns([2, 1])
+        col1, col2 = st.columns([2, 1])
         
-    with col1:
+        with col1:
             st.write("Get curated Spotify playlists based on your music preferences and current mood.")
             
             if st.button("🎧 Get Spotify Playlist", key="get_spotify_playlist", type="primary"):
@@ -61,7 +61,7 @@ else:
                     except Exception as e:
                         st.error(f"❌ Error getting playlist: {str(e)}")
         
-    with col2:
+        with col2:
             st.subheader("Playlist History")
             if 'playlist_history' not in st.session_state:
                 st.session_state.playlist_history = []
@@ -71,9 +71,9 @@ else:
                     st.write(f"{i}. [{genre}]({url}) - {timestamp}")
             else:
                 st.write("No playlists generated yet.")
-
-# Get user data from session state
-if 'user_profile' in st.session_state and 'model' in st.session_state and 'sp_client' in st.session_state:
-    asyncio.run(spotify_playlist_page(st.session_state.user_profile, st.session_state.sp_client, st.session_state.model))
-else:
-    st.error("Please go to the main page first to load your profile.")
+    
+    # Get user data from session state
+    if 'user_profile' in st.session_state and 'model' in st.session_state and 'sp_client' in st.session_state:
+        asyncio.run(spotify_playlist_page(st.session_state.user_profile, st.session_state.sp_client, st.session_state.model))
+    else:
+        st.error("Please go to main page first to load your profile.")
