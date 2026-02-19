@@ -63,8 +63,8 @@ def create_top_navigation():
     """, unsafe_allow_html=True)
     
     # Get current page from URL parameters or session state
-    query_params = st.experimental_get_query_params()
-    current_page = query_params.get('page', ['dashboard'])[0]
+    query_params = st.query_params
+    current_page = query_params.get('page', 'dashboard')
     
     # Create top navigation
     col1, col2, col3 = st.columns([3, 1, 1])
@@ -95,8 +95,8 @@ def create_top_navigation():
 
 def handle_page_navigation():
     """Handle navigation between pages based on URL parameters."""
-    query_params = st.experimental_get_query_params()
-    page = query_params.get('page', ['dashboard'])[0]
+    query_params = st.query_params
+    page = query_params.get('page', 'dashboard')
     
     # Map page names to file paths
     page_map = {
