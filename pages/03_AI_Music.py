@@ -2,7 +2,7 @@ import streamlit as st
 import asyncio
 from music import predict_favorite_genre, create_and_compose
 from datetime import datetime
-from auth_wrapper import require_auth
+from login_simple import is_authenticated, show_login_page
 
 # Set background color to match home page
 st.markdown("""
@@ -13,10 +13,13 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-@require_auth
-async def ai_music_page(user_profile, model):
-    """Display AI-generated music page."""
-    st.title("🎵 AI-Generated Music")
+# Check authentication before showing page
+if not is_authenticated():
+    show_login_page()
+else:
+    async def ai_music_page(user_profile, model):
+        """Display AI-generated music page."""
+        st.title("🎵 AI-Generated Music")
         
     # Show user's predicted genre
     try:
