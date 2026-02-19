@@ -1,5 +1,5 @@
 import streamlit as st
-from login_simple import is_authenticated, show_login_page
+from login import is_authenticated, show_login_page
 
 def check_authentication():
     """Check if user is authenticated and show login page if not."""
