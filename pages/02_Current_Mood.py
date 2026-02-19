@@ -21,25 +21,6 @@ async def current_mood_page():
         st.error("User profile not found. Please complete your profile first.")
         return
     
-    # Current mood overview
-    st.header("Your Current Mood Status")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        anxiety = user_profile.get('Anxiety', 5)
-        st.metric("Anxiety Level", f"{anxiety}/10")
-    
-    with col2:
-        depression = user_profile.get('Depression', 5)
-        st.metric("Mood Score", f"{depression}/10")
-    
-    with col3:
-        insomnia = user_profile.get('Insomnia', 5)
-        st.metric("Sleep Quality", f"{insomnia}/10")
-    
-    st.markdown("---")
-    
     # Mood update form
     st.header("Update Your Mood")
     st.write("Track your current emotional state to get better music recommendations.")
@@ -145,41 +126,6 @@ async def current_mood_page():
                 else:
                     st.error("❌ Failed to reset mood. Please try again.")
     
-    st.markdown("---")
-    
-    # Mood history and insights
-    st.header("Mood Insights")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("Music Recommendations Based on Mood")
-        
-        # Provide recommendations based on current mood
-        anxiety_level = user_profile.get('Anxiety', 5)
-        mood_level = user_profile.get('Depression', 5)
-        sleep_quality = user_profile.get('Insomnia', 5)
-        
-        if anxiety_level > 7:
-            st.info("🎵 **High Anxiety**: Try calming Classical or Jazz music")
-        elif mood_level < 4:
-            st.info("🎵 **Low Mood**: Consider uplifting Pop or Rock music")
-        elif sleep_quality > 7:
-            st.info("🎵 **Poor Sleep**: Try soothing Ambient or Classical music")
-        else:
-            st.info("🎵 **Balanced Mood**: Explore your predicted favorite genre!")
-    
-    with col2:
-        st.subheader("Mood Tracking Tips")
-        st.write("• Update your mood daily for better recommendations")
-        st.write("• Be honest about your emotional state")
-        st.write("• Track patterns in your mood changes")
-        st.write("• Use music to help manage your mood")
-    
-    # Last updated info
-    if 'MoodLastUpdated' in user_profile:
-        st.caption(f"Last mood update: {user_profile['MoodLastUpdated']}")
-    
     # Music Preferences Analysis Section
     st.markdown("---")
     st.header("🎵 Music Preferences Analysis")
@@ -199,22 +145,6 @@ async def current_mood_page():
                     st.error(f"❌ Error predicting genre: {str(e)}")
     else:
         st.warning("Model not loaded. Please refresh the page.")
-    
-    # Show current mood-based recommendations
-    st.subheader("Current Mood-Based Recommendations")
-    
-    anxiety_level = user_profile.get('Anxiety', 5)
-    mood_level = user_profile.get('Depression', 5)
-    sleep_quality = user_profile.get('Insomnia', 5)
-    
-    if anxiety_level > 7:
-        st.info("🎵 **High Anxiety**: Try calming Classical or Jazz music")
-    elif mood_level < 4:
-        st.info("🎵 **Low Mood**: Consider uplifting Pop or Rock music")
-    elif sleep_quality > 7:
-        st.info("🎵 **Poor Sleep**: Try soothing Ambient or Classical music")
-    else:
-        st.info("🎵 **Balanced Mood**: Explore your predicted favorite genre!")
 
 # Run the mood page
 asyncio.run(current_mood_page())
