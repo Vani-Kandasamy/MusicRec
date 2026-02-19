@@ -3,7 +3,18 @@ import asyncio
 from database import get_user_profile, save_user_profile, update_user_mood
 from music import predict_favorite_genre
 from datetime import datetime
+from auth_wrapper import require_auth
 
+# Set background color to match home page
+st.markdown("""
+<style>
+.stApp {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+</style>
+""", unsafe_allow_html=True)
+
+@require_auth
 async def current_mood_page():
     """Display current mood management page."""
     st.title("😊 Current Mood Management")
