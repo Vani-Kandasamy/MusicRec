@@ -217,7 +217,7 @@ async def main():
         # Show welcome message in sidebar
         st.sidebar.write(f"Welcome, {user.get('name', 'User')}!")
         
-        # Show the main home page
+        # Show the main home page content
         await home_page()
 
     except Exception as e:
