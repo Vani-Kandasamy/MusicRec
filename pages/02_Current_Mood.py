@@ -2,13 +2,9 @@ import streamlit as st
 import asyncio
 from database import get_user_profile, save_user_profile, update_user_mood
 from datetime import datetime
-from navigation import create_top_navigation
 
 async def current_mood_page():
     """Display current mood management page."""
-    # Create top navigation
-    create_top_navigation()
-    
     st.title("😊 Current Mood Management")
     
     # Get user data from session state
