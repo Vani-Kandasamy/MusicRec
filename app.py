@@ -3,6 +3,7 @@ import asyncio
 from login import show_login_page, is_authenticated, get_current_user, logout
 from music import predict_favorite_genre, create_and_compose, get_spotify_playlist
 from database import get_user_profile, create_initial_user_profile, display_stored_user_data, update_user_mood
+from navigation import create_top_navigation, handle_page_navigation
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 import nest_asyncio
@@ -41,115 +42,81 @@ def initialize_spotify():
         st.error(f"❌ Failed to initialize Spotify client: {str(e)}")
         return None
 
-async def profile_page(user_profile, model):
-    """Display user profile and mood management page."""
-    st.title("👤 Your Profile & Mood")
+def main_page():
+    """Main dashboard page with overview and quick actions."""
+    st.title("🎵 Music for Mental Health Dashboard")
     
-    # Display user profile information
-    display_stored_user_data(user_profile)
+    # Get user data from session state
+    user_profile = st.session_state.get('user_profile')
+    model = st.session_state.get('model')
+    sp_client = st.session_state.get('sp_client')
     
-    # Show predicted genre
-    if st.button("Predict Your Favorite Genre", key="predict_genre_profile"):
-        with st.spinner('Analyzing your preferences...'):
-            try:
-                genre = predict_favorite_genre(user_profile, model)
-                st.success(f"Based on your profile, your predicted favorite genre is: **{genre}**")
-            except Exception as e:
-                st.error(f"❌ Error predicting genre: {str(e)}")
-
-async def ai_music_page(user_profile, model):
-    """Display AI-generated music page."""
-    st.title("🎵 AI-Generated Music")
-    
-    # Show user's predicted genre
-    try:
-        predicted_genre = predict_favorite_genre(user_profile, model)
-        st.info(f"Your predicted favorite genre: **{predicted_genre}**")
-    except Exception as e:
-        predicted_genre = "Pop"
-        st.warning(f"Could not predict genre: {str(e)}. Using default: {predicted_genre}")
-    
-    # Music generation section
-    st.header("Generate Personalized Music")
-    
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
-        st.write("Generate a unique AI-composed track based on your mood and preferences.")
-        
-        if st.button("🎼 Generate AI Music", key="generate_ai_music", type="primary"):
-            with st.spinner('🎵 Composing your personalized music...'):
-                try:
-                    success = await create_and_compose(predicted_genre)
-                    if success:
-                        st.success("✅ Music generated successfully! Check the player above.")
-                    else:
-                        st.error("❌ Failed to generate music. Please try again.")
-                except Exception as e:
-                    st.error(f"❌ Error generating music: {str(e)}")
-    
-    with col2:
-        st.subheader("Music History")
-        if 'music_history' not in st.session_state:
-            st.session_state.music_history = []
-        
-        if st.session_state.music_history:
-            for i, (genre, timestamp) in enumerate(st.session_state.music_history[-5:], 1):
-                st.write(f"{i}. {genre} - {timestamp}")
-        else:
-            st.write("No music generated yet.")
-
-async def spotify_playlist_page(user_profile, sp_client, model):
-    """Display Spotify playlist page."""
-    st.title("🎧 Spotify Playlists")
-    
-    # Show user's predicted genre
-    try:
-        predicted_genre = predict_favorite_genre(user_profile, model)
-        st.info(f"Your predicted favorite genre: **{predicted_genre}**")
-    except Exception as e:
-        predicted_genre = "Pop"
-        st.warning(f"Could not predict genre: {str(e)}. Using default: {predicted_genre}")
-    
-    # Playlist generation section
-    st.header("Get Personalized Playlists")
-    
-    if not sp_client:
-        st.error("❌ Spotify is not available. Please check your credentials.")
+    if not user_profile or not model:
+        st.error("User data not properly loaded. Please refresh the page.")
         return
     
-    col1, col2 = st.columns([2, 1])
+    # Quick overview cards
+    col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.write("Get curated Spotify playlists based on your music preferences and current mood.")
-        
-        if st.button("🎵 Get Spotify Playlist", key="get_spotify_playlist", type="primary"):
-            with st.spinner('🔍 Finding the perfect playlist for you...'):
-                try:
-                    playlist_url = await get_spotify_playlist(predicted_genre, sp_client)
-                    
-                    if playlist_url:
-                        # Store in history
-                        if 'playlist_history' not in st.session_state:
-                            st.session_state.playlist_history = []
-                        
-                        st.session_state.playlist_history.append((predicted_genre, playlist_url, datetime.now().strftime("%Y-%m-%d %H:%M")))
-                        
-                        st.success(f"✅ Here's a {predicted_genre} playlist for you:")
-                        st.markdown(f"### [🎧 Open Playlist in Spotify]({playlist_url})")
-                    else:
-                        st.warning(f"No {predicted_genre} playlists found. Please try another genre.")
-                except Exception as e:
-                    st.error(f"❌ Failed to fetch playlist: {str(e)}")
+        try:
+            predicted_genre = predict_favorite_genre(user_profile, model)
+            st.metric("Your Genre", predicted_genre)
+        except:
+            st.metric("Your Genre", "Unknown")
     
     with col2:
-        st.subheader("Playlist History")
-        if 'playlist_history' not in st.session_state:
-            st.session_state.playlist_history = []
-        
-        if st.session_state.playlist_history:
-            for i, (genre, url, timestamp) in enumerate(st.session_state.playlist_history[-5:], 1):
-                st.write(f"{i}. [{genre}]({url}) - {timestamp}")
+        mood_score = user_profile.get('Depression', 5)
+        st.metric("Mood Score", f"{mood_score}/10")
+    
+    with col3:
+        music_hours = user_profile.get('Hours per day', 0)
+        st.metric("Music Hours/Day", music_hours)
+    
+    st.markdown("---")
+    
+    # Quick actions
+    st.header("Quick Actions")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.subheader("🎵 AI Music")
+        st.write("Generate personalized AI music based on your mood.")
+        if st.button("Generate AI Music", key="quick_ai_music", type="primary"):
+            st.switch_page("pages/03_AI_Music.py")
+    
+    with col2:
+        st.subheader("🎧 Spotify Playlists")
+        st.write("Get curated playlists from Spotify.")
+        if st.button("Get Spotify Playlist", key="quick_spotify", type="primary"):
+            st.switch_page("pages/04_Spotify_Playlists.py")
+    
+    with col3:
+        st.subheader("😊 Update Mood")
+        st.write("Track your current emotional state.")
+        if st.button("Update Mood", key="quick_mood", type="primary"):
+            st.switch_page("pages/02_Current_Mood.py")
+    
+    # Recent activity
+    st.markdown("---")
+    st.header("Recent Activity")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Recent Music")
+        if 'music_history' in st.session_state and st.session_state.music_history:
+            for genre, timestamp in st.session_state.music_history[-3:]:
+                st.write(f"🎵 {genre} - {timestamp}")
+        else:
+            st.write("No music generated yet.")
+    
+    with col2:
+        st.subheader("Recent Playlists")
+        if 'playlist_history' in st.session_state and st.session_state.playlist_history:
+            for genre, url, timestamp in st.session_state.playlist_history[-3:]:
+                st.write(f"🎧 [{genre}]({url}) - {timestamp}")
         else:
             st.write("No playlists generated yet.")
 
@@ -214,34 +181,27 @@ async def main():
                 st.warning("Please complete your profile to continue.")
                 return
         
-        # Sidebar navigation
-        st.sidebar.title("🎵 Music for Mental Health")
-        st.sidebar.write(f"Welcome, {user.get('name', 'User')}!")
+        # Store data in session state for other pages
+        st.session_state.user_profile = user_profile
+        st.session_state.model = model
+        st.session_state.sp_client = sp_client
+        st.session_state.user = user
         
-        # Add logout button in sidebar
-        if st.sidebar.button("Logout", type="secondary"):
-            logout()
-            st.rerun()
+        # Handle page navigation
+        is_dashboard = handle_page_navigation()
         
-        # Page selection
-        st.sidebar.markdown("---")
-        page = st.sidebar.selectbox(
-            "Navigate to:",
-            ["👤 Profile & Mood", "🎵 AI Music", "🎧 Spotify Playlists"],
-            index=0
-        )
+        if not is_dashboard:
+            return  # Exit if redirected to another page
+        
+        # Create top navigation
+        create_top_navigation()
         
         # Display header image
         st.image("https://cdn.punchng.com/wp-content/uploads/2022/03/28122921/Brain-Train-Blog-Image-2.jpg", 
                 use_column_width=True)
         
-        # Show the selected page
-        if page == "👤 Profile & Mood":
-            await profile_page(user_profile, model)
-        elif page == "🎵 AI Music":
-            await ai_music_page(user_profile, model)
-        elif page == "🎧 Spotify Playlists":
-            await spotify_playlist_page(user_profile, sp_client, model)
+        # Show the main dashboard
+        main_page()
 
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
