@@ -2,7 +2,7 @@ import streamlit as st
 import asyncio
 from music import predict_favorite_genre, create_and_compose
 from datetime import datetime
-from login_simple import is_authenticated, show_login_page
+from login import is_authenticated, show_login_page
 
 # Set background color to match home page
 st.markdown("""
