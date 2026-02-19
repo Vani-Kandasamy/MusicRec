@@ -1,11 +1,8 @@
 import streamlit as st
 import asyncio
-from navigation import create_top_navigation
 
 async def home_page():
     """Display home page with welcome message."""
-    # Create top navigation
-    create_top_navigation()
     
     # Set background color
     st.markdown("""
