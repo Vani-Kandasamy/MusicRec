@@ -2,7 +2,7 @@ import streamlit as st
 import asyncio
 from music import predict_favorite_genre, create_and_compose
 from datetime import datetime
-from login import is_authenticated, show_login_page
+from login_simple import is_authenticated, show_login_page
 
 # Set background color to match home page
 st.markdown("""
@@ -23,7 +23,7 @@ else:
         
     # Show user's predicted genre
     try:
-        predicted_genre = predict_favorite_genre(user_profile, model)
+        predicted_genre = predict_favorite_genre(st.session_state.user_profile, st.session_state.model)
         st.info(f"Your predicted favorite genre: **{predicted_genre}**")
     except Exception as e:
         predicted_genre = "Pop"
