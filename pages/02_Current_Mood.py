@@ -3,7 +3,7 @@ import asyncio
 from database import get_user_profile, save_user_profile, update_user_mood
 from music import predict_favorite_genre
 from datetime import datetime
-from auth_wrapper import require_auth
+from login_simple import is_authenticated, show_login_page
 
 # Set background color to match home page
 st.markdown("""
@@ -14,23 +14,26 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-@require_auth
-async def current_mood_page():
-    """Display current mood management page."""
-    st.title("😊 Current Mood Management")
-    
-    # Get user data from session state
-    user = st.session_state.get('user')
-    if not user:
-        st.error("Please go to the main page first to load your profile.")
-        return
-    
-    user_email = user['email']
-    user_profile = get_user_profile(user_email)
-    
-    if not user_profile:
-        st.error("User profile not found. Please complete your profile first.")
-        return
+# Check authentication before showing page
+if not is_authenticated():
+    show_login_page()
+else:
+    async def current_mood_page():
+        """Display current mood management page."""
+        st.title("😊 Current Mood Management")
+        
+        # Get user data from session state
+        user = st.session_state.get('user')
+        if not user:
+            st.error("Please go to the main page first to load your profile.")
+            return
+        
+        user_email = user['email']
+        user_profile = get_user_profile(user_email)
+        
+        if not user_profile:
+            st.error("User profile not found. Please complete your profile first.")
+            return
     
     # Mood update form
     st.header("Update Your Mood")
