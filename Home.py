@@ -223,5 +223,3 @@ async def main():
         st.error(f"An error occurred: {str(e)}")
         st.stop()
 
-if __name__ == "__main__":
-    asyncio.run(main())
