@@ -3,7 +3,7 @@ import asyncio
 from database import get_user_profile, save_user_profile, update_user_mood
 from music import predict_favorite_genre
 from datetime import datetime
-from login import is_authenticated, show_login_page
+from login_simple import is_authenticated, show_login_page
 
 # Set background color to match home page
 st.markdown("""
