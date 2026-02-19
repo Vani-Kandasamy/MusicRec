@@ -2,13 +2,9 @@ import streamlit as st
 import asyncio
 from music import predict_favorite_genre, create_and_compose
 from datetime import datetime
-from navigation import create_top_navigation
 
 async def ai_music_page(user_profile, model):
     """Display AI-generated music page."""
-    # Create top navigation
-    create_top_navigation()
-    
     st.title("🎵 AI-Generated Music")
     
     # Show user's predicted genre
