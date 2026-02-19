@@ -116,7 +116,7 @@ else:
         if st.button("Predict Your Favorite Genre", key="predict_genre_mood", type="primary"):
             with st.spinner('Analyzing your preferences...'):
                 try:
-                    genre = predict_favorite_genre(user_profile, model)
+                    genre = predict_favorite_genre(st.session_state.user_profile, st.session_state.model)
                     st.success(f"Based on your profile and current mood, your predicted favorite genre is: **{genre}**")
                     
                     # Show music recommendations based on profile and mood
