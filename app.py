@@ -1,6 +1,6 @@
 import streamlit as st
 import asyncio
-from login import show_login_page, is_authenticated, get_current_user, logout
+from login_simple import show_login_page, is_authenticated, get_current_user, logout
 from music import predict_favorite_genre, create_and_compose, get_spotify_playlist
 from database import get_user_profile, create_initial_user_profile, display_stored_user_data, update_user_mood
 import spotipy
@@ -121,6 +121,7 @@ async def home_page():
         <div class="main-title">Reimagining Music Therapy</div>
         <div class="subtitle">TheraBeat AI</div>
         <div class="subtitle">Your personalized journey to mental wellness through the power of generative audio landscapes.</div>
+        
         <div class="feature-cards">
             <div class="feature-card">
                 <div class="feature-icon">🎵</div>
@@ -156,7 +157,7 @@ async def main():
     if 'playlist_history' not in st.session_state:
         st.session_state.playlist_history = []
 
-  
+    """Main application function."""
     try:
         # Set page config
         st.set_page_config(
