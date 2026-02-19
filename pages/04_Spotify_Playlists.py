@@ -2,13 +2,9 @@ import streamlit as st
 import asyncio
 from music import predict_favorite_genre, get_spotify_playlist
 from datetime import datetime
-from navigation import create_top_navigation
 
 async def spotify_playlist_page(user_profile, sp_client, model):
     """Display Spotify playlist page."""
-    # Create top navigation
-    create_top_navigation()
-    
     st.title("🎧 Spotify Playlists")
     
     # Show user's predicted genre
