@@ -1,6 +1,7 @@
 import streamlit as st
 import asyncio
 from database import get_user_profile, save_user_profile, update_user_mood
+from music import predict_favorite_genre
 from datetime import datetime
 
 async def current_mood_page():
@@ -171,6 +172,42 @@ async def current_mood_page():
     # Last updated info
     if 'MoodLastUpdated' in user_profile:
         st.caption(f"Last mood update: {user_profile['MoodLastUpdated']}")
+    
+    # Music Preferences Analysis Section
+    st.markdown("---")
+    st.header("🎵 Music Preferences Analysis")
+    
+    # Get model from session state
+    model = st.session_state.get('model')
+    if model:
+        if st.button("Predict Your Favorite Genre", key="predict_genre_mood", type="primary"):
+            with st.spinner('Analyzing your preferences...'):
+                try:
+                    genre = predict_favorite_genre(user_profile, model)
+                    st.success(f"Based on your profile and current mood, your predicted favorite genre is: **{genre}**")
+                    
+                    # Show music recommendations based on profile and mood
+                    st.info(f"💡 Try AI Music page to generate personalized {genre} tracks!")
+                except Exception as e:
+                    st.error(f"❌ Error predicting genre: {str(e)}")
+    else:
+        st.warning("Model not loaded. Please refresh the page.")
+    
+    # Show current mood-based recommendations
+    st.subheader("Current Mood-Based Recommendations")
+    
+    anxiety_level = user_profile.get('Anxiety', 5)
+    mood_level = user_profile.get('Depression', 5)
+    sleep_quality = user_profile.get('Insomnia', 5)
+    
+    if anxiety_level > 7:
+        st.info("🎵 **High Anxiety**: Try calming Classical or Jazz music")
+    elif mood_level < 4:
+        st.info("🎵 **Low Mood**: Consider uplifting Pop or Rock music")
+    elif sleep_quality > 7:
+        st.info("🎵 **Poor Sleep**: Try soothing Ambient or Classical music")
+    else:
+        st.info("🎵 **Balanced Mood**: Explore your predicted favorite genre!")
 
 # Run the mood page
 asyncio.run(current_mood_page())
