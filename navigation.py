@@ -64,7 +64,7 @@ def create_top_navigation():
     
     # Get current page from URL parameters or session state
     query_params = st.query_params
-    current_page = query_params.get('page', 'dashboard')
+    current_page = query_params.get('page', 'home')
     
     # Create top navigation
     col1, col2, col3 = st.columns([3, 1, 1])
@@ -73,8 +73,8 @@ def create_top_navigation():
         st.markdown(f"""
         <div class="top-nav">
             <div class="nav-links">
-                <span class="app-title">🎵 Music for Mental Health</span>
-                <a href="?page=dashboard" class="nav-link {'active' if current_page == 'dashboard' else ''}">📊 Dashboard</a>
+                <span class="app-title">🎵 TheraBeat AI</span>
+                <a href="?page=home" class="nav-link {'active' if current_page == 'home' else ''}">🏠 Home</a>
                 <a href="?page=profile" class="nav-link {'active' if current_page == 'profile' else ''}">👤 Profile</a>
                 <a href="?page=mood" class="nav-link {'active' if current_page == 'mood' else ''}">😊 Mood</a>
                 <a href="?page=ai_music" class="nav-link {'active' if current_page == 'ai_music' else ''}">🎵 AI Music</a>
@@ -96,19 +96,19 @@ def create_top_navigation():
 def handle_page_navigation():
     """Handle navigation between pages based on URL parameters."""
     query_params = st.query_params
-    page = query_params.get('page', 'dashboard')
+    page = query_params.get('page', 'home')
     
     # Map page names to file paths
     page_map = {
-        'dashboard': 'app_simple.py',
+        'home': 'pages/Home.py',
         'profile': 'pages/01_Profile.py',
         'mood': 'pages/02_Current_Mood.py',
         'ai_music': 'pages/03_AI_Music.py',
         'spotify': 'pages/04_Spotify_Playlists.py'
     }
     
-    # If not on dashboard and page exists in map, switch to that page
-    if page != 'dashboard' and page in page_map:
+    # If not on home and page exists in map, switch to that page
+    if page != 'home' and page in page_map:
         st.switch_page(page_map[page])
     
-    return page == 'dashboard'
+    return page == 'home'
