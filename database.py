@@ -258,8 +258,7 @@ def display_stored_user_data(user_profile):
                         break
                 st.metric(display_name, value)
     
-    # Navigation tip
-    st.info("💡 **Tip**: Navigate to the 'Current Mood' page to update your emotional state and get personalized music recommendations.")
+    
     
     # Last updated
     if 'LastUpdated' in user_profile:
