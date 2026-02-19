@@ -71,7 +71,10 @@ def get_current_user():
     return None
 
 def logout():
-    """Log out the current user."""
+    """Log out of current user."""
     for key in ['authenticated', 'user_email', 'user_name']:
         st.session_state.pop(key, None)
+
+if __name__ == "__main__":
+    asyncio.run(show_login_page())
     st.rerun()
