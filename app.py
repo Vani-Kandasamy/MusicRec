@@ -156,7 +156,7 @@ async def main():
     if 'playlist_history' not in st.session_state:
         st.session_state.playlist_history = []
 
-    """Main application function."""
+   
     try:
         # Set page config
         st.set_page_config(
