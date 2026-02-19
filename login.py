@@ -1,5 +1,4 @@
 import streamlit as st
-import asyncio
 import toml
 from pathlib import Path
 
@@ -76,6 +75,3 @@ def logout():
     for key in ['authenticated', 'user_email', 'user_name']:
         st.session_state.pop(key, None)
 
-if __name__ == "__main__":
-    asyncio.run(show_login_page())
-    st.rerun()
