@@ -44,7 +44,7 @@ def show_login_page():
                         'user_name': email.split('@')[0]  # Use part before @ as display name
                     })
                     # Redirect to main app after successful login
-                    st.switch_page("app_simple.py")
+                    st.switch_page("Home.py")
                     st.rerun()
                 else:
                     st.error("Invalid email or password")
