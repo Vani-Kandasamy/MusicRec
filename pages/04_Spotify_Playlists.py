@@ -2,7 +2,7 @@ import streamlit as st
 import asyncio
 from music import predict_favorite_genre, get_spotify_playlist
 from datetime import datetime
-from auth_wrapper import require_auth
+from login_simple import is_authenticated, show_login_page
 
 # Set background color to match home page
 st.markdown("""
@@ -13,25 +13,28 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-@require_auth
-async def spotify_playlist_page(user_profile, sp_client, model):
-    """Display Spotify playlist page."""
-    st.title("🎧 Spotify Playlists")
+# Check authentication before showing page
+if not is_authenticated():
+    show_login_page()
+else:
+    async def spotify_playlist_page(user_profile, sp_client, model):
+        """Display Spotify playlist page."""
+        st.title("🎧 Spotify Playlists")
         
-    # Show user's predicted genre
-    try:
-        predicted_genre = predict_favorite_genre(user_profile, model)
-        st.info(f"Your predicted favorite genre: **{predicted_genre}**")
-    except Exception as e:
-        predicted_genre = "Pop"
+        # Show user's predicted genre
+        try:
+            predicted_genre = predict_favorite_genre(user_profile, model)
+            st.info(f"Your predicted favorite genre: **{predicted_genre}**")
+        except Exception as e:
+            predicted_genre = "Pop"
         st.warning(f"Could not predict genre: {str(e)}. Using default: {predicted_genre}")
         
     # Playlist generation section
-    st.header("Get Personalized Playlists")
+        st.header("Get Personalized Playlists")
         
-    if not sp_client:
-        st.error("❌ Spotify is not available. Please check your credentials.")
-        return
+        if not sp_client:
+            st.error("❌ Spotify is not available. Please check your credentials.")
+            return
         
     col1, col2 = st.columns([2, 1])
         
