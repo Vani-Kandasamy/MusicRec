@@ -10,8 +10,8 @@ from io import BytesIO
 from datetime import datetime, timedelta
 import time
 import nest_asyncio
-import google.generativeai as genai
-from google.generativeai import types
+from google import genai
+from google.genai import types
 
 # Allow asyncio to run nested within Streamlit
 nest_asyncio.apply()
@@ -25,8 +25,11 @@ if not API_KEY:
 
 # Initialize Lyria client
 import google.generativeai as genai
-genai.configure(api_key=API_KEY)
-client = genai.GenerativeModel(MODEL_ID)
+
+client = genai.Client(
+    api_key=API_KEY, 
+    http_options={'api_version': 'v1alpha'} # REQUIRED for Lyria
+)
 
 # Genre mapping and prompts
 GENRE_MAPPING = [
@@ -132,7 +135,7 @@ def predict_favorite_genre(user_profile, model):
         return "Pop"
 
 async def generate_genre_track(genre_name, duration_seconds=10):
-    """Generate a music track using Google Generative AI for the specified genre."""
+    """ACTUALLY generates audio using Lyria RealTime."""
     prompt_text = GENRE_PROMPTS.get(genre_name)
     if not prompt_text:
         st.error(f"Genre {genre_name} not found.")
@@ -141,31 +144,40 @@ async def generate_genre_track(genre_name, duration_seconds=10):
     filename = f"{genre_name.replace(' ', '_')}_track.wav"
     
     try:
-        st.write(f"🎵 Generating {genre_name}...")
+        # We save the stream to a local file so Streamlit can play it
+        with wave.open(filename, 'wb') as wf:
+            wf.setnchannels(2)      # Stereo
+            wf.setsampwidth(2)      # 16-bit
+            wf.setframerate(48000)  # 48kHz
+
+            # Connect to the Lyria WebSocket
+            async with client.aio.live.music.connect(model='models/lyria-realtime-exp') as session:
+                st.write(f"🎵 Connected to Lyria. Composing {genre_name}...")
+                
+                # Set the prompt
+                await session.set_weighted_prompts(
+                    prompts=[types.WeightedPrompt(text=prompt_text, weight=1.0)]
+                )
+
+                # Start playback
+                await session.play()
+
+                chunks_needed = duration_seconds // 2 # ~2 seconds per chunk
+                count = 0
+
+                async for message in session.receive():
+                    if message.server_content.audio_chunks:
+                        # Write raw PCM data to the wav file
+                        wf.writeframes(message.server_content.audio_chunks[0].data)
+                        count += 1
+                    
+                    if count >= chunks_needed:
+                        break
         
-        # Generate music description using Google Generative AI
-        response = client.generate_content(
-            f"Create a detailed music composition description for: {prompt_text}. "
-            f"Focus on instrumentation, tempo, mood, and structure for a {duration_seconds}-second track."
-        )
-        
-        if response.text:
-            st.success(f"✅ {genre_name} concept generated!")
-            st.info("📝 Music Description:")
-            st.write(response.text)
-            
-            # For now, create a placeholder audio file
-            # In a real implementation, you would use the description to generate actual audio
-            st.warning("🔧 Note: Audio generation is currently in development mode. "
-                      "The music description has been generated above.")
-            
-            return filename
-        else:
-            st.error("Failed to generate music description.")
-            return None
-        
+        return filename
+
     except Exception as e:
-        st.error(f"❌ Error generating {genre_name} track: {str(e)}")
+        st.error(f"❌ Lyria Connection Error: {str(e)}")
         return None
 
 async def get_spotify_playlist(genre, sp_client=None):
@@ -183,8 +195,8 @@ async def get_spotify_playlist(genre, sp_client=None):
             import spotipy
             from spotipy.oauth2 import SpotifyClientCredentials
             sp_client = spotipy.Spotify(auth_manager=SpotifyClientCredentials(
-                client_id=st.secrets['music']["SPOTIFY_CLIENT_ID"],
-                client_secret=st.secrets['music']["SPOTIFY_CLIENT_SECRET"]
+                client_id=st.secrets["SPOTIFY_CLIENT_ID"],
+                client_secret=st.secrets["SPOTIFY_CLIENT_SECRET"]
             ))
             
         results = sp_client.search(q=genre, type='playlist', limit=5)
