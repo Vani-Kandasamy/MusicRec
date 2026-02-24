@@ -202,17 +202,16 @@ async def create_and_compose(genre):
     """Create and compose a new track of the specified genre using Lyria."""
     if not API_KEY:
         st.error("❌ Music generation is not available. Missing Lyria API key.")
-        return False
+        return None
 
     try:
         with st.spinner('🎵 Composing your personalized music...'):
             filename = await generate_genre_track(genre, duration_seconds=10)
             if filename:
-                st.success("✅ Music generated successfully!")
-                return True
+                return filename
             else:
                 st.error("Failed to generate music.")
-                return False
+                return None
     except Exception as e:
         st.error(f"❌ Error in music generation: {str(e)}")
-        return False
+        return None
