@@ -45,14 +45,6 @@ else:
             insomnia = st.slider("Insomnia Level", 0, 10, value=int(user_profile.get('Insomnia', 5)))
             
             ocd = st.slider("OCD Level", 0, 10, value=int(user_profile.get('OCD', 5)))
-            
-            
-            music_effect = st.slider(
-                "Music's Effect on Mood", 
-                min_value=0, 
-                max_value=10, 
-                value=int(user_profile.get('MusicEffects', 5))
-            )
 
             submitted = st.form_submit_button("Update Mood", type="primary")
 
@@ -63,7 +55,6 @@ else:
                     'Depression': depression,
                     'Insomnia': insomnia,
                     'OCD': ocd,
-                    'MusicEffects': music_effect,
                     'MoodLastUpdated': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
                 user_profile.update(mood_data)
