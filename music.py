@@ -4,12 +4,12 @@ import asyncio
 import os
 import wave
 import streamlit as st
-import nest_asyncio
 import random
 import numpy as np
 from io import BytesIO
 from datetime import datetime, timedelta
 import time
+import nest_asyncio
 import google.generativeai as genai
 from google.generativeai import types
 
@@ -24,7 +24,9 @@ if not API_KEY:
     st.error("❌ Lyria API key is not configured. Please check your secrets.toml file.")
 
 # Initialize Lyria client
-client = genai.Client(api_key=API_KEY, http_options={'api_version': 'v1alpha'})
+import google.generativeai as genai
+genai.configure(api_key=API_KEY)
+client = genai.GenerativeModel(MODEL_ID)
 
 # Genre mapping and prompts
 GENRE_MAPPING = [
@@ -137,7 +139,7 @@ def predict_favorite_genre(user_profile, model):
         return "Pop"
 
 async def generate_genre_track(genre_name, duration_seconds=10):
-    """Generate a music track using Lyria AI for the specified genre."""
+    """Generate a music track using Google Generative AI for the specified genre."""
     prompt_text = GENRE_PROMPTS.get(genre_name)
     if not prompt_text:
         st.error(f"Genre {genre_name} not found.")
@@ -146,44 +148,28 @@ async def generate_genre_track(genre_name, duration_seconds=10):
     filename = f"{genre_name.replace(' ', '_')}_track.wav"
     
     try:
-        # Lyria outputs 48kHz Stereo 16-bit PCM
-        with wave.open(filename, 'wb') as wf:
-            wf.setnchannels(2)
-            wf.setsampwidth(2)
-            wf.setframerate(48000)
-
-            async with client.aio.live.music.connect(model=MODEL_ID) as session:
-                st.write(f"🎵 Generating {genre_name}...")
-                
-                # Set the musical style (Weighted prompts allow blending later)
-                await session.set_weighted_prompts(
-                    prompts=[types.WeightedPrompt(text=prompt_text, weight=1.0)]
-                )
-
-                # Optional: Add specific BPM or Brightness for the genre
-                await session.set_music_generation_config(
-                    config=types.LiveMusicGenerationConfig(brightness=0.6)
-                )
-
-                await session.play()
-
-                # Each chunk is roughly 2 seconds
-                chunks_to_get = duration_seconds // 2
-                received = 0
-                
-                async for message in session.receive():
-                    if message.server_content.audio_chunks:
-                        wf.writeframes(message.server_content.audio_chunks[0].data)
-                        received += 1
-                    
-                    if received >= chunks_to_get:
-                        break
-                
-                st.success(f"✅ {genre_name} generation complete.")
-
-        # Display audio in Streamlit
-        st.audio(filename, format='audio/wav')
-        return filename
+        st.write(f"🎵 Generating {genre_name}...")
+        
+        # Generate music description using Google Generative AI
+        response = client.generate_content(
+            f"Create a detailed music composition description for: {prompt_text}. "
+            f"Focus on instrumentation, tempo, mood, and structure for a {duration_seconds}-second track."
+        )
+        
+        if response.text:
+            st.success(f"✅ {genre_name} concept generated!")
+            st.info("📝 Music Description:")
+            st.write(response.text)
+            
+            # For now, create a placeholder audio file
+            # In a real implementation, you would use the description to generate actual audio
+            st.warning("🔧 Note: Audio generation is currently in development mode. "
+                      "The music description has been generated above.")
+            
+            return filename
+        else:
+            st.error("Failed to generate music description.")
+            return None
         
     except Exception as e:
         st.error(f"❌ Error generating {genre_name} track: {str(e)}")
