@@ -4,11 +4,14 @@ from music import predict_favorite_genre, get_spotify_playlist
 from datetime import datetime
 from login import is_authenticated, show_login_page
 
-# Set background color to match home page
+# Set background color to match home page and hide sidebar
 st.markdown("""
 <style>
 .stApp {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+[data-testid="stSidebar"] {
+    display: none;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -55,7 +58,7 @@ else:
                             
                             st.success("✅ Playlist found! Click below to open.")
                             st.markdown(f"### 🎧 Your {predicted_genre} Playlist")
-                            st.markdown(f"[Open Playlist]({playlist_url})")
+                            st.markdown(f'<a href="{playlist_url}" target="_blank">🎵 Open Playlist in Spotify</a>', unsafe_allow_html=True)
                         else:
                             st.error("❌ No playlist found. Try a different genre.")
                     except Exception as e:
