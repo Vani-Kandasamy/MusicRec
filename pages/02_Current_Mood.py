@@ -15,7 +15,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Check authentication before showing page
-# Check authentication before showing page
 if not is_authenticated():
     show_login_page()
 else:
@@ -23,90 +22,57 @@ else:
     
     user = st.session_state.get('user')
     if not user:
-        st.error("Please go to the main page first to load your profile.")
+        st.error("Please load your profile first.")
     else:
         user_email = user['email']
-        user_profile = get_user_profile(user_email)
+        user_profile = get_user_profile(user_email) or {}
+
+        st.header("Update Your Mood")
         
-        if not user_profile:
-            st.error("User profile not found. Please complete your profile first.")
-        else:
-            st.header("Update Your Mood")
-            st.write("Track your current emotional state to get better music recommendations.")
+        with st.form("mood_update_form"):
+            # We use int() to make sure Streamlit gets the right data type
+            openness = st.selectbox(
+                "Openness to new experiences",
+                options=[1, 0],
+                format_func=lambda x: "Yes" if x == 1 else "No",
+                index=0 if int(user_profile.get('Exploratory', 1)) == 1 else 1
+            )
+
+            anxiety = st.slider("Anxiety Level", 0, 10, value=int(user_profile.get('Anxiety', 5)))
             
-            # --- START OF THE FORM ---
-            with st.form("mood_update_form"):
-                
-                # List widgets one after the other
-                openness = st.selectbox(
-                    "Openness to new experiences",
-                    options=[1, 0],
-                    format_func=lambda x: "Yes" if x == 1 else "No",
-                    index=0 if user_profile.get('Exploratory', 1) == 1 else 1
-                )
+            depression = st.slider("Depression Level", 0, 10, value=int(user_profile.get('Depression', 5)))
             
-                anxiety = st.slider(
-                    "Anxiety Level",
-                    min_value=0,
-                    max_value=10,
-                    value=user_profile.get('Anxiety', 5),
-                    help="0 = No anxiety, 10 = Severe anxiety"
-                )
+            insomnia = st.slider("Insomnia Level", 0, 10, value=int(user_profile.get('Insomnia', 5)))
             
-                depression = st.slider(
-                    "Depression Level",
-                    min_value=0,
-                    max_value=10,
-                    value=user_profile.get('Depression', 5),
-                    help="0 = Very low mood, 10 = Excellent mood"
-                )
+            ocd = st.slider("OCD Level", 0, 10, value=int(user_profile.get('OCD', 5)))
             
-                insomnia = st.slider(
-                    "Insomnia Level",
-                    min_value=0,
-                    max_value=10,
-                    value=user_profile.get('Insomnia', 5),
-                    help="0 = No insomnia, 10 = Severe insomnia"
-                )
-            
-                ocd = st.slider(
-                    "OCD Level",
-                    min_value=0,
-                    max_value=10,
-                    value=user_profile.get('OCD', 5),
-                    help="0 = No OCD, 10 = Severe OCD"
-                )
-            
-                music_effect = st.slider(
-                    "Music's Effect on Mood",
-                    min_value=0,
-                    max_value=10,
-                    value=user_profile.get('MusicEffects', 5),
-                    help="0 = No effect, 10 = Strong effect"
-                )
-            
-                # MUST contain a submit button inside the 'with' block
-                submitted = st.form_submit_button("Update Mood", type="primary")
-                
-                if submitted:
-                    mood_data = {
-                        'Exploratory': openness,
-                        'Anxiety': anxiety,
-                        'Depression': depression,
-                        'Insomnia': insomnia,
-                        'OCD': ocd,
-                        'MusicEffects': music_effect,
-                        'MoodLastUpdated': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    }
+            # This was the specific line causing your latest error
+            music_effect = st.slider(
+                "Music's Effect on Mood", 
+                min_value=0, 
+                max_value=10, 
+                value=int(user_profile.get('MusicEffects', 5))
+            )
+
+            submitted = st.form_submit_button("Update Mood", type="primary")
+
+            if submitted:
+                mood_data = {
+                    'Exploratory': openness,
+                    'Anxiety': anxiety,
+                    'Depression': depression,
+                    'Insomnia': insomnia,
+                    'OCD': ocd,
+                    'MusicEffects': music_effect,
+                    'MoodLastUpdated': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
+                user_profile.update(mood_data)
+                if save_user_profile(user_email, user_profile):
+                    st.success("✅ Mood updated!")
+                    st.rerun()
                     
-                    user_profile.update(mood_data)
-                    
-                    if save_user_profile(user_email, user_profile):
-                        st.session_state.user_profile = user_profile
-                        st.success("✅ Mood updated successfully!")
-                        st.rerun()
-                    else:
-                        st.error("❌ Failed to update mood.")
+                else:
+                    st.error("❌ Failed to update mood.")
             # --- END OF THE FORM ---
                         
     st.markdown("---")
