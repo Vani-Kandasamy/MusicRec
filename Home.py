@@ -1,6 +1,6 @@
 import streamlit as st
 import asyncio
-from login import show_login_page, is_authenticated, get_current_user, logout
+from login_simple_2 import show_login_page, is_authenticated, get_current_user, logout
 from music import predict_favorite_genre, create_and_compose, get_spotify_playlist
 from database import get_user_profile, create_initial_user_profile, display_stored_user_data, update_user_mood
 import spotipy
@@ -236,3 +236,6 @@ async def main():
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
         st.stop()
+
+if __name__ == "__main__":
+    asyncio.run(main())
