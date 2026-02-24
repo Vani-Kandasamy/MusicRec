@@ -121,6 +121,7 @@ async def home_page():
         <div class="main-title">Reimagining Music Therapy</div>
         <div class="subtitle">TheraBeat AI</div>
         <div class="subtitle">Your personalized journey to mental wellness through the power of generative audio landscapes.</div>
+        
         <div class="feature-cards">
             <div class="feature-card">
                 <div class="feature-icon">🎵</div>
@@ -156,7 +157,7 @@ async def main():
     if 'playlist_history' not in st.session_state:
         st.session_state.playlist_history = []
 
-   
+    """Main application function."""
     try:
         # Set page config
         st.set_page_config(
@@ -208,7 +209,20 @@ async def main():
         st.session_state.sp_client = sp_client
         st.session_state.user = user
         
-        # Add logout button in sidebar
+        # Add logout button in sidebar with gradient background
+        st.sidebar.markdown("""
+        <style>
+        [data-testid="stSidebar"] {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        [data-testid="stSidebar"] .css-1lrl5i {
+            color: white;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
         if st.sidebar.button("🚪 Logout", type="secondary"):
             logout()
             st.rerun()
@@ -222,6 +236,3 @@ async def main():
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
         st.stop()
-
-if __name__ == "__main__":
-    asyncio.run(main())
