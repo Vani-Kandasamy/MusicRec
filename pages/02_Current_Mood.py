@@ -107,6 +107,108 @@ else:
                         'Music effects': music_effect,
                         'MoodLastUpdated': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     }
+                    update_user_mood(user_email, mood_data)
+                    save_user_profile(user_email, user_profile)
+                    st.success("✅ Mood updated successfully!")
+                    st.rerun()
+    
+    st.markdown("---")
+    
+    # Mental Health Resources Section
+    st.header("🧠 Mental Health Resources & Information")
+    st.write("Understanding mental health conditions can help you better track your mood and seek appropriate support when needed.")
+    
+    with st.expander("📘 Understanding Anxiety"):
+        st.markdown("""
+        **What to look for:**
+        - Excessive worry or fear about everyday situations
+        - Feeling restless or on edge
+        - Difficulty concentrating or mind going blank
+        - Physical symptoms: rapid heartbeat, sweating, trembling
+        - Sleep disturbances and fatigue
+        
+        **When to seek help:**
+        - If anxiety interferes with daily activities
+        - If you experience panic attacks
+        - If symptoms persist for more than a few weeks
+        
+        **Helpful resources:**
+        - National Alliance on Mental Illness (NAMI): 1-800-950-NAMI
+        - Anxiety and Depression Association of America (ADAA)
+        - Crisis Text Line: Text HOME to 741741
+        """)
+    
+    with st.expander("📘 Understanding Depression"):
+        st.markdown("""
+        **What to look for:**
+        - Persistent sad, anxious, or empty mood
+        - Loss of interest or pleasure in activities
+        - Changes in appetite or weight
+        - Sleep disturbances (too much or too little)
+        - Fatigue and decreased energy
+        - Feelings of worthlessness or guilt
+        - Difficulty concentrating or making decisions
+        
+        **When to seek help:**
+        - If symptoms last more than two weeks
+        - If you have thoughts of self-harm
+        - If depression affects work, school, or relationships
+        
+        **Helpful resources:**
+        - National Suicide Prevention Lifeline: 988
+        - Depression and Bipolar Support Alliance (DBSA)
+        - Mental Health America (MHA)
+        """)
+    
+    with st.expander("📘 Understanding Insomnia"):
+        st.markdown("""
+        **What to look for:**
+        - Difficulty falling asleep
+        - Waking up frequently during the night
+        - Waking up too early and unable to fall back asleep
+        - Feeling tired upon waking
+        - Daytime fatigue or sleepiness
+        - Irritability or concentration problems
+        
+        **When to seek help:**
+        - If insomnia occurs at least 3 nights per week for 3 months
+        - If it significantly impacts your daily functioning
+        - If you've tried sleep hygiene without improvement
+        
+        **Helpful resources:**
+        - National Sleep Foundation
+        - American Academy of Sleep Medicine
+        - Sleep Education by the AASM
+        """)
+    
+    with st.expander("📘 Understanding OCD (Obsessive-Compulsive Disorder)"):
+        st.markdown("""
+        **What to look for:**
+        **Obsessions:**
+        - Unwanted, intrusive thoughts or images
+        - Fear of contamination or germs
+        - Need for symmetry or exactness
+        - Forbidden thoughts about harm or religion
+        
+        **Compulsions:**
+        - Excessive cleaning or handwashing
+        - Repeating actions (checking, counting)
+        - Arranging items in specific patterns
+        - Mental rituals (praying, counting silently)
+        
+        **When to seek help:**
+        - If obsessions/compulsions take more than 1 hour daily
+        - If they significantly impact your quality of life
+        - If you can't control the behaviors
+        
+        **Helpful resources:**
+        - International OCD Foundation (IOCDF)
+        - OCD Action
+        - Made of Millions Foundation
+        """)
+    
+    st.info("💡 **Note:** This information is for educational purposes only. If you're experiencing severe symptoms or having thoughts of self-harm, please contact a healthcare professional or emergency services immediately.")
+    
     st.markdown("---")
     st.header("🎵 Music Preferences Analysis")
     
@@ -125,6 +227,9 @@ else:
                     st.error(f"❌ Error predicting genre: {str(e)}")
     else:
         st.warning("Model not loaded. Please refresh the page.")
+        
+        # Removed asyncio.run(current_mood_page())
 
-# Run the mood page
-asyncio.run(current_mood_page())
+# Run the mood page for authenticated users
+if 'user_profile' in st.session_state and 'model' in st.session_state:
+    asyncio.run(current_mood_page())
