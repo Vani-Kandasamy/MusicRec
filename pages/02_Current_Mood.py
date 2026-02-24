@@ -46,7 +46,7 @@ else:
             
             ocd = st.slider("OCD Level", 0, 10, value=int(user_profile.get('OCD', 5)))
             
-            # This was the specific line causing your latest error
+            
             music_effect = st.slider(
                 "Music's Effect on Mood", 
                 min_value=0, 
