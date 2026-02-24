@@ -216,13 +216,13 @@ async def create_and_compose(genre):
         return None
 
     try:
-        with st.spinner('🎵 Composing your personalized music...'):
-            filename = await generate_genre_track(genre, duration_seconds=10)
-            if filename:
-                return filename
-            else:
-                st.error("Failed to generate music.")
-                return None
+        #with st.spinner('🎵 Composing your personalized music...'):
+        filename = await generate_genre_track(genre, duration_seconds=10)
+        if filename:
+            return filename
+        else:
+            st.error("Failed to generate music.")
+            return None
     except Exception as e:
         st.error(f"❌ Error in music generation: {str(e)}")
         return None
