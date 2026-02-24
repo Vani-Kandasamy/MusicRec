@@ -121,7 +121,6 @@ async def home_page():
         <div class="main-title">Reimagining Music Therapy</div>
         <div class="subtitle">TheraBeat AI</div>
         <div class="subtitle">Your personalized journey to mental wellness through the power of generative audio landscapes.</div>
-        
         <div class="feature-cards">
             <div class="feature-card">
                 <div class="feature-icon">🎵</div>
