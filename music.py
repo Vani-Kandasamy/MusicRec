@@ -120,18 +120,11 @@ def predict_favorite_genre(user_profile, model):
         # Get prediction from the model
         prediction = model.predict(input_array)
         
-        # Debug: Print prediction and features
-        st.write(f"Debug: Raw prediction = {prediction}")
-        st.write(f"Debug: Input features = {input_features}")
-        
         # Ensure prediction is an integer index
         index = int(prediction[0]) if len(prediction) > 0 else 0
         index = max(0, min(index, len(GENRE_MAPPING) - 1))  # Ensure valid index
         
         predicted_genre = GENRE_MAPPING[index]
-        
-        # Debug: Print final result
-        st.write(f"Debug: Index = {index}, Predicted Genre = {predicted_genre}")
         
         return predicted_genre
         
