@@ -67,6 +67,25 @@ else:
             # --- END OF THE FORM ---
                         
     st.markdown("---")
+    st.header("🎵 Music Preferences Analysis")
+    
+    # Get model from session state
+    model = st.session_state.get('model')
+    if model:
+        if st.button("Predict Your Favorite Genre", key="predict_genre_mood", type="primary"):
+            with st.spinner('Analyzing your preferences...'):
+                try:
+                    genre = predict_favorite_genre(st.session_state.user_profile, st.session_state.model)
+                    st.success(f"Based on your profile and current mood, your predicted favorite genre is: **{genre}**")
+                    
+                    # Show music recommendations based on profile and mood
+                    st.info(f"💡 Try AI Music page to generate personalized {genre} tracks!")
+                except Exception as e:
+                    st.error(f"Error predicting genre: {str(e)}")
+    else:
+        st.warning("Model not loaded. Please refresh the page.")
+
+    st.markdown("---")
     
     # Mental Health Resources Section
     st.header("🧠 Mental Health Resources & Information")
@@ -163,21 +182,4 @@ else:
     
     st.info("💡 **Note:** This information is for educational purposes only. If you're experiencing severe symptoms or having thoughts of self-harm, please contact a healthcare professional or emergency services immediately.")
     
-    st.markdown("---")
-    st.header("🎵 Music Preferences Analysis")
     
-    # Get model from session state
-    model = st.session_state.get('model')
-    if model:
-        if st.button("Predict Your Favorite Genre", key="predict_genre_mood", type="primary"):
-            with st.spinner('Analyzing your preferences...'):
-                try:
-                    genre = predict_favorite_genre(st.session_state.user_profile, st.session_state.model)
-                    st.success(f"Based on your profile and current mood, your predicted favorite genre is: **{genre}**")
-                    
-                    # Show music recommendations based on profile and mood
-                    st.info(f"💡 Try AI Music page to generate personalized {genre} tracks!")
-                except Exception as e:
-                    st.error(f"Error predicting genre: {str(e)}")
-    else:
-        st.warning("Model not loaded. Please refresh the page.")
