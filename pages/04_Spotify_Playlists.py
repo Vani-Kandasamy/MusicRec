@@ -53,7 +53,7 @@ else:
                             
                             st.success("✅ Playlist found! Click below to open.")
                             st.markdown(f"### 🎧 Your {predicted_genre} Playlist")
-                            st.write(f"Debug: Playlist URL = {playlist_url}")  # Debug line
+                            #st.write(f"Debug: Playlist URL = {playlist_url}")  # Debug line
                             st.markdown(f'<a href="{playlist_url}" target="_blank">🎵 Open Playlist in Spotify</a>', unsafe_allow_html=True)
                         else:
                             st.error("❌ No playlist found. Try a different genre.")
