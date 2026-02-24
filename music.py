@@ -23,8 +23,7 @@ MODEL_ID = "models/lyria-v1"
 if not API_KEY:
     st.error("❌ Lyria API key is not configured. Please check your secrets.toml file.")
 
-# Initialize Lyria client
-import google.generativeai as genai
+
 
 client = genai.Client(
     api_key=API_KEY, 
