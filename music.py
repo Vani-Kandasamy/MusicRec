@@ -4,6 +4,7 @@ import asyncio
 import os
 import wave
 import streamlit as st
+import nest_asyncio
 import random
 import numpy as np
 from io import BytesIO
