@@ -89,32 +89,30 @@ else:
                     help="0 = No effect, 10 = Strong effect"
                 )
             
-                col1, col2 = st.columns(2)
-            
-                with col1:
-                    if st.form_submit_button("Update Mood", type="primary"):
-                        # Update mood data
-                        mood_data = {
-                            'Exploratory': openness,
-                            'Anxiety': anxiety,
-                            'Depression': depression,
-                            'Insomnia': insomnia,
-                            'OCD': ocd,
-                            'MusicEffects': music_effect,  # Fixed field name
-                            'MoodLastUpdated': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        }
-                        
-                        # Update the user profile with new mood data
-                        user_profile.update(mood_data)
-                        
-                        # Save the updated profile
-                        if save_user_profile(user_email, user_profile):
-                            # Also update session state
-                            st.session_state.user_profile = user_profile
-                            st.success("✅ Mood updated successfully!")
-                            st.rerun()
-                        else:
-                            st.error("❌ Failed to update mood. Please try again.")
+                
+                if st.form_submit_button("Update Mood", type="primary"):
+                    # Update mood data
+                    mood_data = {
+                        'Exploratory': openness,
+                        'Anxiety': anxiety,
+                        'Depression': depression,
+                        'Insomnia': insomnia,
+                        'OCD': ocd,
+                        'MusicEffects': music_effect,  # Fixed field name
+                        'MoodLastUpdated': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    }
+                    
+                    # Update the user profile with new mood data
+                    user_profile.update(mood_data)
+                    
+                    # Save the updated profile
+                    if save_user_profile(user_email, user_profile):
+                        # Also update session state
+                        st.session_state.user_profile = user_profile
+                        st.success("✅ Mood updated successfully!")
+                        st.rerun()
+                    else:
+                        st.error("❌ Failed to update mood. Please try again.")
     
     st.markdown("---")
     
