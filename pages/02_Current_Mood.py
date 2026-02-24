@@ -31,53 +31,57 @@ else:
             st.error("User profile not found. Please complete your profile first.")
         else:
             st.header("Update Your Mood")
-            st.write("Track your current emotional state for better recommendations.")
+            st.write("Track your current emotional state to get better music recommendations.")
             
-            # --- FIXED FORM SECTION ---
+            # START OF FORM (No columns, just a straight list)
             with st.form("mood_update_form"):
-                # Create columns INSIDE the form once
-                f_col1, f_col2 = st.columns(2)
+                
+                openness = st.selectbox(
+                    "Openness to new experiences",
+                    options=[1, 0],
+                    format_func=lambda x: "Yes" if x == 1 else "No",
+                    index=0 if user_profile.get('Exploratory', 1) == 1 else 1
+                )
             
-                with f_col1:
-                    openness = st.selectbox(
-                        "Openness to new experiences",
-                        options=[1, 0],
-                        format_func=lambda x: "Yes" if x == 1 else "No",
-                        index=0 if user_profile.get('Exploratory', 1) == 1 else 1
-                    )
-                
-                    anxiety = st.slider(
-                        "Anxiety Level",
-                        0, 10, value=user_profile.get('Anxiety', 5),
-                        help="0 = No anxiety, 10 = Severe anxiety"
-                    )
-                
-                    depression = st.slider(
-                        "Depression Level",
-                        0, 10, value=user_profile.get('Depression', 5),
-                        help="0 = Very low mood, 10 = Excellent mood"
-                    )
-                
-                with f_col2:
-                    insomnia = st.slider(
-                        "Insomnia Level",
-                        0, 10, value=user_profile.get('Insomnia', 5)
-                    )
-                
-                    ocd = st.slider(
-                        "OCD Level",
-                        0, 10, value=user_profile.get('OCD', 5)
-                    )
-                
-                    music_effect = st.slider(
-                        "Music's Effect on Mood",
-                        0, 10, value=user_profile.get('MusicEffects', 5)
-                    )
+                anxiety = st.slider(
+                    "Anxiety Level",
+                    min_value=0, max_value=10,
+                    value=user_profile.get('Anxiety', 5),
+                    help="0 = No anxiety, 10 = Severe anxiety"
+                )
             
-                # The submit button MUST be inside the 'with st.form' block
-                submitted = st.form_submit_button("Update Mood", type="primary")
+                depression = st.slider(
+                    "Depression Level",
+                    min_value=0, max_value=10,
+                    value=user_profile.get('Depression', 5),
+                    help="0 = Very low mood, 10 = Excellent mood"
+                )
+            
+                insomnia = st.slider(
+                    "Insomnia Level",
+                    min_value=0, max_value=10,
+                    value=user_profile.get('Insomnia', 5),
+                    help="0 = No insomnia, 10 = Severe insomnia"
+                )
+            
+                ocd = st.slider(
+                    "OCD Level",
+                    min_value=0, max_value=10,
+                    value=user_profile.get('OCD', 5),
+                    help="0 = No OCD, 10 = Severe OCD"
+                )
+            
+                music_effect = st.slider(
+                    "Music's Effect on Mood",
+                    min_value=0, max_value=10,
+                    value=user_profile.get('MusicEffects', 5),
+                    help="0 = No effect, 10 = Strong effect"
+                )
+            
+                # The submit button is now clearly at the bottom of the list
+                submit_button = st.form_submit_button("Update Mood", type="primary")
                 
-                if submitted:
+                if submit_button:
                     mood_data = {
                         'Exploratory': openness,
                         'Anxiety': anxiety,
@@ -95,8 +99,8 @@ else:
                         st.success("✅ Mood updated successfully!")
                         st.rerun()
                     else:
-                        st.error("❌ Failed to update mood.")
-            # --- END OF FORM ---
+                        st.error("❌ Failed to update mood. Please try again.")
+                        
     st.markdown("---")
     
     # Mental Health Resources Section
