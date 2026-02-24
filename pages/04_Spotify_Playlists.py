@@ -20,24 +20,22 @@ st.markdown("""
 if not is_authenticated():
     show_login_page()
 else:
-    async def spotify_playlist_page(user_profile, sp_client, model):
-        """Display Spotify playlist page."""
-        st.title("🎧 Spotify Playlists")
-        
-        # Show user's predicted genre
-        try:
-            predicted_genre = predict_favorite_genre(user_profile, model)
-            st.info(f"Your predicted favorite genre: **{predicted_genre}**")
-        except Exception as e:
-            predicted_genre = "Pop"
-            st.warning(f"Could not predict genre: {str(e)}. Using default: {predicted_genre}")
-        
-        # Playlist generation section
-        st.header("Get Personalized Playlists")
-        
-        if not sp_client:
-            st.error("❌ Spotify is not available. Please check your credentials.")
-            return
+    st.title("🎧 Spotify Playlists")
+    
+    # Show user's predicted genre
+    try:
+        predicted_genre = predict_favorite_genre(st.session_state.user_profile, st.session_state.model)
+        st.info(f"Your predicted favorite genre: **{predicted_genre}**")
+    except Exception as e:
+        predicted_genre = "Pop"
+        st.warning(f"Could not predict genre: {str(e)}. Using default: {predicted_genre}")
+    
+    # Playlist generation section
+    st.header("Get Personalized Playlists")
+    
+    if not st.session_state.sp_client:
+        st.error("❌ Spotify is not available. Please check your credentials.")
+    else:
         
         col1, col2 = st.columns([2, 1])
         
@@ -75,8 +73,4 @@ else:
             else:
                 st.write("No playlists generated yet.")
     
-    # Get user data from session state
-    if 'user_profile' in st.session_state and 'model' in st.session_state and 'sp_client' in st.session_state:
-        asyncio.run(spotify_playlist_page(st.session_state.user_profile, st.session_state.sp_client, st.session_state.model))
-    else:
-        st.error("Please go to main page first to load your profile.")
+    
