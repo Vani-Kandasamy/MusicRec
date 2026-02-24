@@ -45,7 +45,7 @@ else:
             if st.button("🎧 Get Spotify Playlist", key="get_spotify_playlist", type="primary"):
                 with st.spinner('🎧 Finding your perfect playlist...'):
                     try:
-                        playlist_url = get_spotify_playlist(predicted_genre)
+                        playlist_url = asyncio.run(get_spotify_playlist(predicted_genre, st.session_state.sp_client))
                         
                         if playlist_url:
                             # Store in history
@@ -56,6 +56,7 @@ else:
                             
                             st.success("✅ Playlist found! Click below to open.")
                             st.markdown(f"### 🎧 Your {predicted_genre} Playlist")
+                            st.write(f"Debug: Playlist URL = {playlist_url}")  # Debug line
                             st.markdown(f'<a href="{playlist_url}" target="_blank">🎵 Open Playlist in Spotify</a>', unsafe_allow_html=True)
                         else:
                             st.error("❌ No playlist found. Try a different genre.")
